@@ -1,0 +1,4149 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Precifica+ - Sistema de Precificação de Receitas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      :root {
+        --verde-sage: #7fa67a;
+        --verde-escuro: #4f7a49;
+        --verde-profundo: #3a5c36;
+        --verde-logo: #3d5a3a;
+        --verde-claro: #b8d4b0;
+        --bege-claro: #fbf8f2;
+        --bege-medio: #ebe0cb;
+        --bege-escuro: #d4b896;
+        --marrom-claro: #a67b5b;
+        --marrom: #6b4423;
+        --marrom-escuro: #2e1f14;
+        --branco: #ffffff;
+        --cinza-suave: #f7f3ec;
+        --cinza-borda: #e8dfd0;
+        --pdf-laranja: #c9422f;
+        --pdf-laranja-escuro: #a0321f;
+        --sombra-sm:
+          0 1px 3px rgba(46, 31, 20, 0.06), 0 1px 2px rgba(46, 31, 20, 0.04);
+        --sombra-md:
+          0 4px 12px rgba(46, 31, 20, 0.06), 0 2px 4px rgba(46, 31, 20, 0.04);
+        --sombra-lg:
+          0 12px 32px rgba(46, 31, 20, 0.08), 0 4px 8px rgba(46, 31, 20, 0.04);
+        --sombra-hover:
+          0 16px 40px rgba(46, 31, 20, 0.12), 0 6px 12px rgba(46, 31, 20, 0.06);
+        --transicao: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 18px;
+        --radius-xl: 24px;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        font-family:
+          "Poppins",
+          -apple-system,
+          BlinkMacSystemFont,
+          sans-serif;
+        background: var(--bege-claro);
+        min-height: 100vh;
+        color: var(--marrom-escuro);
+        line-height: 1.6;
+        font-size: 15px;
+        font-weight: 400;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        overflow-x: hidden;
+      }
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 280px;
+        height: 100vh;
+        background: linear-gradient(
+          180deg,
+          var(--verde-profundo) 0%,
+          var(--verde-escuro) 100%
+        );
+        color: var(--branco);
+        box-shadow: 4px 0 24px rgba(46, 31, 20, 0.12);
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+      }
+      .sidebar-header {
+        padding: 24px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .logo-completo {
+        width: 100%;
+        max-width: 240px;
+      }
+      .logo-completo svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .sidebar-nav {
+        flex: 1;
+        padding: 24px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        overflow-y: auto;
+      }
+      .nav-btn {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 13px 16px;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.85);
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: 0.92rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: var(--transicao);
+        text-align: left;
+        width: 100%;
+        position: relative;
+      }
+      .nav-btn:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--branco);
+        transform: translateX(3px);
+      }
+      .nav-btn.active {
+        background: rgba(255, 255, 255, 0.14);
+        color: var(--branco);
+        font-weight: 600;
+        box-shadow: inset 3px 0 0 var(--verde-claro);
+      }
+      .nav-icon {
+        display: flex;
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+      }
+      .nav-icon svg {
+        width: 100%;
+        height: 100%;
+      }
+      .sidebar-footer {
+        padding: 20px 28px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 0.72rem;
+        color: rgba(255, 255, 255, 0.5);
+        text-align: center;
+        letter-spacing: 0.02em;
+      }
+      .sidebar-footer .consultoria {
+        margin-top: 8px;
+        font-size: 0.68rem;
+        opacity: 0.7;
+      }
+      .backup-section {
+        padding: 16px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .backup-section-title {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        opacity: 0.7;
+        margin-bottom: 4px;
+        font-weight: 600;
+      }
+      .backup-btn-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .backup-btn {
+        flex: 1;
+        padding: 10px 14px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--radius-sm);
+        color: var(--branco);
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: var(--transicao);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+      .backup-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-1px);
+      }
+      .help-icon {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        color: var(--branco);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 600;
+        flex-shrink: 0;
+        transition: var(--transicao);
+      }
+      .help-icon:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(1.1);
+      }
+      .main-content {
+        margin-left: 280px;
+        min-height: 100vh;
+        transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .top-bar {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        padding: 18px 40px;
+        box-shadow: var(--sombra-sm);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        border-bottom: 1px solid var(--cinza-borda);
+      }
+      .page-title {
+        color: var(--marrom-escuro);
+        font-size: 1.6rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      .page-title-sub {
+        color: var(--marrom-claro);
+        font-size: 0.82rem;
+        font-weight: 400;
+        margin-top: 2px;
+        letter-spacing: 0.02em;
+      }
+      .menu-toggle {
+        display: none;
+        background: var(--branco);
+        color: var(--verde-escuro);
+        border: 1px solid var(--cinza-borda);
+        width: 44px;
+        height: 44px;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: var(--transicao);
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--sombra-sm);
+      }
+      .menu-toggle:hover {
+        background: var(--cinza-suave);
+      }
+      .menu-toggle svg {
+        width: 20px;
+        height: 20px;
+      }
+      .content-area {
+        padding: 36px 40px 60px;
+        max-width: 1400px;
+      }
+      .page {
+        display: none;
+        animation: fadeIn 0.35s ease;
+      }
+      .page.active {
+        display: block;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .card {
+        background: var(--branco);
+        border-radius: var(--radius-lg);
+        padding: 32px;
+        box-shadow: var(--sombra-md);
+        margin-bottom: 24px;
+        transition: var(--transicao);
+        border: 1px solid rgba(232, 223, 208, 0.5);
+      }
+      .card:hover {
+        box-shadow: var(--sombra-lg);
+      }
+      .card-title {
+        color: var(--marrom-escuro);
+        font-size: 1.35rem;
+        font-weight: 600;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--cinza-borda);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        letter-spacing: -0.01em;
+      }
+      .card-title-icon {
+        display: flex;
+        width: 32px;
+        height: 32px;
+        padding: 6px;
+        background: linear-gradient(
+          135deg,
+          var(--verde-claro) 0%,
+          var(--verde-sage) 100%
+        );
+        border-radius: var(--radius-sm);
+        color: var(--verde-profundo);
+        flex-shrink: 0;
+      }
+      .card-title-icon svg {
+        width: 100%;
+        height: 100%;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: var(--marrom);
+        font-size: 0.88rem;
+        letter-spacing: 0.01em;
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1.5px solid var(--cinza-borda);
+        border-radius: var(--radius-md);
+        font-family: "Poppins", sans-serif;
+        font-size: 0.95rem;
+        background: var(--branco);
+        color: var(--marrom-escuro);
+        transition: var(--transicao);
+      }
+      input:focus,
+      select:focus {
+        outline: none;
+        border-color: var(--verde-sage);
+        box-shadow: 0 0 0 4px rgba(127, 166, 122, 0.12);
+      }
+      input::placeholder {
+        color: #b8a896;
+      }
+      .search-input-wrapper {
+        position: relative;
+        margin-bottom: 20px;
+      }
+      .search-input-wrapper input {
+        padding-left: 44px;
+      }
+      .search-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 18px;
+        height: 18px;
+        color: var(--marrom-claro);
+        pointer-events: none;
+      }
+      .search-icon svg {
+        width: 100%;
+        height: 100%;
+      }
+      button.btn {
+        background: linear-gradient(
+          135deg,
+          var(--verde-sage) 0%,
+          var(--verde-escuro) 100%
+        );
+        color: var(--branco);
+        padding: 13px 28px;
+        border: none;
+        border-radius: var(--radius-md);
+        font-family: "Poppins", sans-serif;
+        font-size: 0.92rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transicao);
+        box-shadow: 0 4px 12px rgba(79, 122, 73, 0.25);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        letter-spacing: 0.01em;
+      }
+      button.btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(79, 122, 73, 0.35);
+      }
+      button.btn:active {
+        transform: translateY(0);
+      }
+      button.btn-excel {
+        background: linear-gradient(135deg, #217346 0%, #185c37 100%);
+        box-shadow: 0 4px 12px rgba(33, 115, 70, 0.3);
+      }
+      button.btn-excel:hover {
+        box-shadow: 0 8px 20px rgba(33, 115, 70, 0.4);
+      }
+      button.btn-pdf {
+        background: linear-gradient(
+          135deg,
+          var(--pdf-laranja) 0%,
+          var(--pdf-laranja-escuro) 100%
+        );
+        box-shadow: 0 4px 12px rgba(201, 66, 47, 0.3);
+      }
+      button.btn-pdf:hover {
+        box-shadow: 0 8px 20px rgba(201, 66, 47, 0.4);
+      }
+      button.btn-action {
+        background: linear-gradient(
+          135deg,
+          var(--verde-sage) 0%,
+          var(--verde-escuro) 100%
+        );
+        color: var(--branco);
+        padding: 9px 16px;
+        font-size: 0.82rem;
+        box-shadow: 0 2px 6px rgba(79, 122, 73, 0.2);
+      }
+      button.btn-action.btn-delete {
+        background: linear-gradient(135deg, #a67b5b 0%, #6b4423 100%);
+        box-shadow: 0 2px 6px rgba(107, 68, 35, 0.2);
+      }
+      button.btn-action.btn-details {
+        background: linear-gradient(
+          135deg,
+          var(--bege-escuro) 0%,
+          var(--marrom-claro) 100%
+        );
+        box-shadow: 0 2px 6px rgba(166, 123, 91, 0.25);
+      }
+      /* CORREÇÃO: Estilo para o botão secundário (Cancelar) nos modais */
+      button.btn-secondary {
+        background: var(--cinza-suave);
+        color: var(--marrom-escuro);
+        padding: 13px 28px;
+        border: 1px solid var(--cinza-borda);
+        border-radius: var(--radius-md);
+        font-family: "Poppins", sans-serif;
+        font-size: 0.92rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transicao);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        letter-spacing: 0.01em;
+      }
+      button.btn-secondary:hover {
+        background: var(--bege-medio);
+      }
+
+      .btn-icon {
+        display: flex;
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+      }
+      .btn-icon svg {
+        width: 100%;
+        height: 100%;
+      }
+      .list-item {
+        background: var(--cinza-suave);
+        padding: 18px 22px;
+        margin-bottom: 10px;
+        border-radius: var(--radius-md);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-left: 3px solid var(--verde-sage);
+        transition: var(--transicao);
+        gap: 16px;
+      }
+      .list-item:hover {
+        transform: translateX(4px);
+        box-shadow: var(--sombra-sm);
+        background: var(--branco);
+      }
+      .list-item-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .list-item-info strong {
+        color: var(--marrom-escuro);
+        font-size: 1rem;
+        font-weight: 600;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .list-item-info p {
+        color: var(--marrom);
+        margin-top: 2px;
+        font-size: 0.85rem;
+      }
+      .list-item-info .price-highlight {
+        color: var(--verde-escuro);
+        font-weight: 600;
+      }
+      .list-item-info .lucro-highlight {
+        color: var(--verde-profundo);
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+      .list-item-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        flex-shrink: 0;
+      }
+      .list-item-with-photo {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex: 1;
+        min-width: 0;
+      }
+      .receita-photo {
+        width: 110px;
+        height: 110px;
+        border-radius: var(--radius-md);
+        object-fit: cover;
+        flex-shrink: 0;
+        border: 2px solid var(--cinza-borda);
+        background: var(--bege-claro);
+      }
+      .receita-photo-placeholder {
+        width: 110px;
+        height: 110px;
+        border-radius: var(--radius-md);
+        background: var(--cinza-suave);
+        border: 2px dashed var(--cinza-borda);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: var(--marrom-claro);
+      }
+      .receita-photo-placeholder svg {
+        width: 40px;
+        height: 40px;
+        opacity: 0.5;
+      }
+      .photo-upload-btn {
+        background: transparent;
+        border: 1px dashed var(--verde-sage);
+        color: var(--verde-escuro);
+        padding: 8px 12px;
+        border-radius: var(--radius-sm);
+        font-size: 0.78rem;
+        cursor: pointer;
+        transition: var(--transicao);
+        font-family: "Poppins", sans-serif;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+      .photo-upload-btn:hover {
+        background: rgba(127, 166, 122, 0.1);
+      }
+      .photo-remove-btn {
+        background: transparent;
+        border: 1px solid var(--marrom-claro);
+        color: var(--marrom-claro);
+        padding: 8px 12px;
+        border-radius: var(--radius-sm);
+        font-size: 0.78rem;
+        cursor: pointer;
+        transition: var(--transicao);
+        font-family: "Poppins", sans-serif;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+      .photo-remove-btn:hover {
+        background: rgba(166, 123, 91, 0.1);
+      }
+      .photo-input-hidden {
+        display: none;
+      }
+      .ingredientes-total {
+        background: linear-gradient(
+          135deg,
+          var(--verde-claro) 0%,
+          var(--verde-sage) 100%
+        );
+        color: var(--verde-profundo);
+        padding: 16px 22px;
+        border-radius: var(--radius-md);
+        margin-top: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 600;
+        box-shadow: var(--sombra-sm);
+      }
+      .ingredientes-total .total-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .ingredientes-total .total-value {
+        font-size: 1.4rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      .price-display {
+        background: linear-gradient(
+          135deg,
+          var(--verde-profundo) 0%,
+          var(--verde-escuro) 50%,
+          var(--verde-sage) 100%
+        );
+        color: var(--branco);
+        padding: 36px;
+        border-radius: var(--radius-lg);
+        text-align: center;
+        margin: 24px 0;
+        box-shadow: 0 12px 32px rgba(79, 122, 73, 0.3);
+        position: relative;
+        overflow: hidden;
+      }
+      .price-display::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.08) 0%,
+          transparent 70%
+        );
+        border-radius: 50%;
+      }
+      .price-display h3 {
+        font-size: 0.85rem;
+        margin-bottom: 12px;
+        opacity: 0.85;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        font-weight: 500;
+        position: relative;
+      }
+      .price-display .price {
+        font-size: 3.2rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        position: relative;
+      }
+      .calculation-details {
+        background: var(--cinza-suave);
+        padding: 28px;
+        border-radius: var(--radius-md);
+        margin: 20px 0;
+        border: 1px solid var(--cinza-borda);
+      }
+      .calculation-details h4 {
+        color: var(--marrom-escuro);
+        margin-bottom: 18px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .calculation-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px dashed var(--cinza-borda);
+        color: var(--marrom);
+        font-size: 0.9rem;
+      }
+      .calculation-row:last-child {
+        border-bottom: none;
+        font-weight: 700;
+        color: var(--verde-profundo);
+        font-size: 1.1rem;
+        padding-top: 16px;
+        margin-top: 8px;
+        border-top: 2px solid var(--verde-sage);
+      }
+      .empty-state {
+        text-align: center;
+        padding: 56px 24px;
+        color: var(--marrom-claro);
+      }
+      .empty-state-icon {
+        display: flex;
+        justify-content: center;
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 16px;
+        opacity: 0.35;
+        color: var(--verde-sage);
+      }
+      .empty-state-icon svg {
+        width: 100%;
+        height: 100%;
+      }
+      .empty-state p {
+        font-size: 0.95rem;
+      }
+      .summary-box {
+        background: linear-gradient(
+          135deg,
+          var(--bege-medio) 0%,
+          var(--bege-escuro) 100%
+        );
+        color: var(--marrom-escuro);
+        padding: 28px;
+        border-radius: var(--radius-lg);
+        margin: 24px 0;
+        box-shadow: var(--sombra-md);
+        border: 1px solid rgba(212, 184, 150, 0.4);
+      }
+      .summary-box h3 {
+        margin-bottom: 12px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--marrom-escuro);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .summary-box .summary-value {
+        font-size: 2.4rem;
+        font-weight: 700;
+        color: var(--verde-profundo);
+        letter-spacing: -0.02em;
+      }
+      .summary-box .summary-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 16px;
+        font-size: 0.95rem;
+        color: var(--marrom);
+        padding-top: 16px;
+        border-top: 1px solid rgba(107, 68, 35, 0.15);
+      }
+      .summary-box .summary-info strong {
+        color: var(--verde-profundo);
+        font-size: 1.25rem;
+        font-weight: 700;
+      }
+      .summary-icon {
+        display: flex;
+        width: 20px;
+        height: 20px;
+        color: var(--verde-escuro);
+        flex-shrink: 0;
+      }
+      .summary-icon svg {
+        width: 100%;
+        height: 100%;
+      }
+      .info-box {
+        background: #f0f7ee;
+        border-left: 3px solid var(--verde-sage);
+        padding: 16px 20px;
+        border-radius: var(--radius-sm);
+        margin: 16px 0;
+        color: var(--verde-profundo);
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        font-size: 0.9rem;
+      }
+      .info-box-icon {
+        display: flex;
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+      .info-box-icon svg {
+        width: 100%;
+        height: 100%;
+      }
+      .info-box.warning {
+        background: #fff6e8;
+        border-left-color: var(--marrom-claro);
+        color: var(--marrom);
+      }
+      .info-box.warning .info-box-icon {
+        color: var(--marrom-claro);
+      }
+      .info-box strong {
+        color: inherit;
+        font-weight: 600;
+      }
+      .action-bar {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+      }
+      .action-bar button.btn {
+        flex: 1;
+        min-width: 200px;
+      }
+      /* Modal de Detalhamento */
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(46, 31, 20, 0.7);
+        backdrop-filter: blur(4px);
+        z-index: 2000;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+      }
+      .modal-overlay.active {
+        display: flex;
+      }
+      .modal-content {
+        background: var(--branco);
+        border-radius: var(--radius-lg);
+        max-width: 800px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: var(--sombra-lg);
+        animation: modalFadeIn 0.3s ease;
+      }
+      @keyframes modalFadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .modal-header {
+        background: linear-gradient(
+          135deg,
+          var(--verde-sage) 0%,
+          var(--verde-escuro) 100%
+        );
+        color: var(--branco);
+        padding: 24px 28px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .modal-header h2 {
+        font-size: 1.4rem;
+        font-weight: 600;
+      }
+      .modal-close {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        color: var(--branco);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transicao);
+      }
+      .modal-close:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: rotate(90deg);
+      }
+      .modal-body {
+        padding: 28px;
+      }
+      .detail-section {
+        margin-bottom: 24px;
+      }
+      .detail-section h3 {
+        color: var(--verde-profundo);
+        font-size: 1.1rem;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid var(--bege-medio);
+      }
+      .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+      }
+      .detail-item {
+        background: var(--cinza-suave);
+        padding: 12px;
+        border-radius: var(--radius-sm);
+      }
+      .detail-item-label {
+        font-size: 0.8rem;
+        color: var(--marrom);
+        margin-bottom: 4px;
+      }
+      .detail-item-value {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--marrom-escuro);
+      }
+      .modal-footer {
+        padding: 20px 28px;
+        border-top: 1px solid var(--cinza-borda);
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+      /* Modal de Ajuda/Info */
+      .help-modal .modal-content {
+        max-width: 600px;
+      }
+      .help-modal .modal-body {
+        line-height: 1.8;
+      }
+      .help-modal .modal-body strong {
+        color: var(--verde-profundo);
+      }
+      .help-modal .modal-body ul {
+        margin: 12px 0;
+        padding-left: 24px;
+      }
+      .help-modal .modal-body li {
+        margin: 8px 0;
+      }
+      .help-modal .alert-box {
+        background: #fff4e6;
+        border-left: 4px solid var(--marrom-claro);
+        padding: 16px;
+        border-radius: var(--radius-sm);
+        margin: 16px 0;
+      }
+      .help-modal .alert-box strong {
+        color: var(--marrom);
+      }
+      .overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(46, 31, 20, 0.5);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 999;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+      .overlay.active {
+        display: block;
+        opacity: 1;
+      }
+      #inputImportarBackup {
+        display: none;
+      }
+      /* Aviso de reprecificação */
+      .aviso-reprecificacao {
+        background: linear-gradient(135deg, #fff4e6 0%, #ffe8cc 100%);
+        border-left: 4px solid var(--marrom-claro);
+        padding: 16px 20px;
+        border-radius: var(--radius-md);
+        margin-top: 20px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        color: var(--marrom);
+        font-size: 0.9rem;
+        line-height: 1.5;
+      }
+      .aviso-reprecificacao .aviso-icon {
+        flex-shrink: 0;
+        width: 24px;
+        height: 24px;
+        color: var(--marrom-claro);
+      }
+      .aviso-reprecificacao .aviso-icon svg {
+        width: 100%;
+        height: 100%;
+      }
+      .aviso-reprecificacao strong {
+        color: var(--marrom);
+      }
+      @media (max-width: 1200px) {
+        .content-area {
+          padding: 28px 32px 50px;
+        }
+      }
+      @media (max-width: 992px) {
+        .sidebar {
+          transform: translateX(-100%);
+          width: 280px;
+        }
+        .sidebar.open {
+          transform: translateX(0);
+        }
+        .main-content {
+          margin-left: 0;
+        }
+        .menu-toggle {
+          display: flex;
+        }
+        .content-area {
+          padding: 24px;
+        }
+        .top-bar {
+          padding: 16px 24px;
+        }
+        .page-title {
+          font-size: 1.3rem;
+        }
+      }
+      @media (max-width: 640px) {
+        .content-area {
+          padding: 16px;
+        }
+        .card {
+          padding: 22px 20px;
+          border-radius: var(--radius-md);
+        }
+        .card-title {
+          font-size: 1.15rem;
+          margin-bottom: 18px;
+          padding-bottom: 12px;
+        }
+        .list-item {
+          flex-direction: column;
+          align-items: stretch;
+          padding: 16px;
+        }
+        .list-item-with-photo {
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          gap: 12px;
+        }
+        .receita-photo,
+        .receita-photo-placeholder {
+          width: 100px;
+          height: 100px;
+        }
+        .list-item-info {
+          width: 100%;
+          text-align: center;
+        }
+        .list-item-actions {
+          flex-direction: row;
+          flex-wrap: wrap;
+          width: 100%;
+          margin-top: 8px;
+          justify-content: center;
+          gap: 6px;
+        }
+        .list-item-actions button {
+          flex: 1 1 calc(50% - 6px);
+          min-width: 0;
+          font-size: 0.75rem;
+          padding: 8px 10px;
+        }
+        .list-item-actions .photo-upload-btn,
+        .list-item-actions .photo-remove-btn {
+          flex: 1 1 100%;
+          margin-top: 4px;
+        }
+        .price-display {
+          padding: 28px 20px;
+        }
+        .price-display .price {
+          font-size: 2.4rem;
+        }
+        .page-title {
+          font-size: 1.15rem;
+        }
+        .page-title-sub {
+          display: none;
+        }
+        .sidebar {
+          width: 85%;
+          max-width: 300px;
+        }
+        button.btn {
+          width: 100%;
+          padding: 12px 20px;
+        }
+        .action-bar {
+          flex-direction: column;
+        }
+        .action-bar button.btn {
+          min-width: 100%;
+        }
+        .top-bar {
+          padding: 14px 16px;
+        }
+        .summary-box .summary-value {
+          font-size: 1.8rem;
+        }
+        .calculation-details {
+          padding: 20px;
+        }
+        .ingredientes-total {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+        }
+        .ingredientes-total .total-value {
+          font-size: 1.2rem;
+        }
+        .modal-content {
+          margin: 10px;
+          max-height: 95vh;
+        }
+        .modal-header {
+          padding: 18px 20px;
+        }
+        .modal-body {
+          padding: 20px;
+        }
+      }
+      @media (max-width: 380px) {
+        .sidebar-header {
+          padding: 18px 16px;
+        }
+        .content-area {
+          padding: 12px;
+        }
+        .card {
+          padding: 18px 16px;
+        }
+        .list-item-actions button {
+          flex: 1 1 100%;
+        }
+        .receita-photo,
+        .receita-photo-placeholder {
+          width: 90px;
+          height: 90px;
+        }
+      }
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--bege-escuro);
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--marrom-claro);
+      }
+    </style>
+  </head>
+  <body>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-completo">
+          <svg viewBox="0 0 280 70" xmlns="http://www.w3.org/2000/svg">
+            <rect width="280" height="70" fill="#3D5A3A" rx="8" />
+            <g transform="translate(12, 8)">
+              <rect
+                x="0"
+                y="0"
+                width="46"
+                height="54"
+                rx="4"
+                fill="none"
+                stroke="white"
+                stroke-width="2.5"
+              />
+              <rect
+                x="5"
+                y="5"
+                width="36"
+                height="10"
+                rx="2"
+                fill="none"
+                stroke="white"
+                stroke-width="2"
+              />
+              <rect x="5" y="20" width="9" height="8" rx="1.5" fill="white" />
+              <rect x="18" y="20" width="9" height="8" rx="1.5" fill="white" />
+              <rect x="31" y="20" width="9" height="8" rx="1.5" fill="white" />
+              <rect x="5" y="31" width="9" height="8" rx="1.5" fill="white" />
+              <rect x="18" y="31" width="9" height="8" rx="1.5" fill="white" />
+              <rect x="31" y="31" width="9" height="8" rx="1.5" fill="white" />
+              <rect x="5" y="42" width="9" height="8" rx="1.5" fill="white" />
+              <rect x="18" y="42" width="9" height="8" rx="1.5" fill="white" />
+              <rect x="31" y="31" width="9" height="19" rx="1.5" fill="white" />
+              <text
+                x="35.5"
+                y="44"
+                font-family="Poppins, sans-serif"
+                font-size="9"
+                font-weight="700"
+                fill="#3D5A3A"
+                text-anchor="middle"
+              >
+                +
+              </text>
+            </g>
+            <text
+              x="68"
+              y="32"
+              font-family="Poppins, sans-serif"
+              font-size="28"
+              font-weight="700"
+              fill="white"
+              letter-spacing="-0.5"
+            >
+              Precifica+
+            </text>
+            <text
+              x="70"
+              y="52"
+              font-family="Poppins, sans-serif"
+              font-size="9"
+              font-weight="300"
+              fill="rgba(255,255,255,0.85)"
+              letter-spacing="0.3"
+            >
+              Precifique certo, lucre de verdade
+            </text>
+          </svg>
+        </div>
+      </div>
+      <nav class="sidebar-nav" id="sidebarNav"></nav>
+      <div class="backup-section">
+        <div class="backup-section-title">Gerenciamento de Dados</div>
+        <div class="backup-btn-wrapper">
+          <button class="backup-btn" onclick="exportarBackup()">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Exportar Backup
+          </button>
+          <div
+            class="help-icon"
+            onclick="mostrarAjudaExportar()"
+            title="Saiba mais sobre exportar backup"
+          >
+            ?
+          </div>
+        </div>
+        <div class="backup-btn-wrapper">
+          <button
+            class="backup-btn"
+            onclick="document.getElementById('inputImportarBackup').click()"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            Importar Backup
+          </button>
+          <div
+            class="help-icon"
+            onclick="mostrarAjudaImportar()"
+            title="Saiba mais sobre importar backup"
+          >
+            ?
+          </div>
+        </div>
+        <input
+          type="file"
+          id="inputImportarBackup"
+          accept=".json"
+          onchange="importarBackup(this)"
+        />
+      </div>
+      <div class="sidebar-footer">
+        © 2026 Precifica+ · Todos os direitos reservados
+        <div class="consultoria">
+          Control10 Consultoria – www.control10planilhas.com
+        </div>
+      </div>
+    </aside>
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+    <main class="main-content">
+      <div class="top-bar">
+        <button
+          class="menu-toggle"
+          onclick="toggleSidebar()"
+          id="menuToggle"
+        ></button>
+        <div>
+          <h1 class="page-title" id="pageTitle">Receitas</h1>
+          <div class="page-title-sub" id="pageSubtitle">
+            Gerencie suas receitas com facilidade
+          </div>
+        </div>
+        <div style="width: 44px"></div>
+      </div>
+      <div class="content-area">
+        <div id="receitas" class="page active">
+          <div class="card">
+            <h2 class="card-title" id="titleReceitas">
+              Cadastrar Nova Receita
+            </h2>
+            <div class="form-group">
+              <label>Nome da Receita</label>
+              <input
+                type="text"
+                id="receitaNome"
+                placeholder="Ex: Bolo de Chocolate"
+              />
+            </div>
+            <button class="btn" onclick="salvarReceita()" id="btnSalvarReceita">
+              Salvar Receita
+            </button>
+          </div>
+          <div class="card">
+            <h2 class="card-title" id="titleListaReceitas">
+              Receitas Cadastradas
+            </h2>
+            <div class="search-input-wrapper">
+              <span class="search-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+              </span>
+              <input
+                type="text"
+                id="searchReceitas"
+                placeholder="Pesquisar receita por nome..."
+                oninput="filtrarReceitas()"
+              />
+            </div>
+            <div id="listaReceitas"></div>
+          </div>
+        </div>
+        <div id="despesasFixas" class="page">
+          <div class="card">
+            <h2 class="card-title" id="titleHoras">Horas de Trabalho</h2>
+            <div class="form-group">
+              <label>Horas totais de trabalho ao mês</label>
+              <input
+                type="text"
+                inputmode="decimal"
+                id="horasTrabalho"
+                placeholder="Ex: 220,00"
+                class="input-numerico"
+              />
+            </div>
+            <button
+              class="btn"
+              onclick="salvarHorasTrabalho()"
+              id="btnSalvarHoras"
+            >
+              Salvar Horas
+            </button>
+            <div id="horasInfo" style="margin-top: 15px"></div>
+          </div>
+          <div class="card">
+            <h2 class="card-title" id="titleNovaDespesa">Nova Despesa Fixa</h2>
+            <div class="form-group">
+              <label>Nome da Despesa</label>
+              <input type="text" id="despesaNome" placeholder="Ex: Aluguel" />
+            </div>
+            <div class="form-group">
+              <label>Valor Mensal (R$)</label>
+              <input
+                type="text"
+                inputmode="decimal"
+                id="despesaValor"
+                placeholder="Ex: 2.500,00"
+                class="input-numerico input-moeda"
+              />
+            </div>
+            <button class="btn" onclick="salvarDespesa()" id="btnSalvarDespesa">
+              Salvar Despesa
+            </button>
+          </div>
+          <div class="card">
+            <h2 class="card-title" id="titleListaDespesas">
+              Despesas Fixas Cadastradas
+            </h2>
+            <div class="search-input-wrapper">
+              <span class="search-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+              </span>
+              <input
+                type="text"
+                id="searchDespesas"
+                placeholder="Pesquisar despesa por nome..."
+                oninput="filtrarDespesas()"
+              />
+            </div>
+            <div id="listaDespesas"></div>
+            <div id="somatoriaDespesas"></div>
+          </div>
+        </div>
+        <div id="ingredientes" class="page">
+          <div class="card">
+            <h2 class="card-title" id="titleIngrediente">
+              Cadastrar Novo Ingrediente
+            </h2>
+            <div class="form-group">
+              <label>Nome do Ingrediente</label>
+              <input
+                type="text"
+                id="ingredienteNome"
+                placeholder="Ex: Farinha de Trigo"
+              />
+            </div>
+            <div class="form-group">
+              <label>Unidade de Medida</label>
+              <select id="ingredienteUnidade">
+                <option value="g">Grama (g)</option>
+                <option value="ml">Mililitro (ml)</option>
+                <option value="un">Unidade (un)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Custo Unitário (R$)</label>
+              <input
+                type="text"
+                inputmode="decimal"
+                id="ingredienteCusto"
+                placeholder="Ex: 5,50"
+                class="input-numerico input-moeda"
+              />
+            </div>
+            <div class="form-group">
+              <label>Quantidade na Embalagem</label>
+              <input
+                type="text"
+                inputmode="decimal"
+                id="ingredienteQuantidade"
+                placeholder="Ex: 1,00"
+                class="input-numerico"
+              />
+            </div>
+            <button
+              class="btn"
+              onclick="salvarIngrediente()"
+              id="btnSalvarIngrediente"
+            >
+              Salvar Ingrediente
+            </button>
+            <div class="aviso-reprecificacao">
+              <span class="aviso-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+                  />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+              </span>
+              <div>
+                <strong>Atenção:</strong> Caso o custo de algum ingrediente seja
+                alterado após uma precificação já realizada, será necessário
+                <strong>recalcular e atualizar</strong> a precificação das
+                receitas que utilizam este ingrediente, para que o preço de
+                venda reflita o novo custo.
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <h2 class="card-title" id="titleListaIngredientes">
+              Ingredientes Cadastrados
+            </h2>
+            <div class="search-input-wrapper">
+              <span class="search-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+              </span>
+              <input
+                type="text"
+                id="searchIngredientes"
+                placeholder="Pesquisar ingrediente por nome..."
+                oninput="filtrarIngredientes()"
+              />
+            </div>
+            <div id="listaIngredientes"></div>
+          </div>
+        </div>
+        <div id="precificacao" class="page">
+          <div class="card">
+            <h2 class="card-title" id="titleSelecionar">Selecionar Receita</h2>
+            <div class="form-group">
+              <label>Receita</label>
+              <select
+                id="receitaSelect"
+                onchange="carregarIngredientesReceita()"
+              >
+                <option value="">Selecione uma receita...</option>
+              </select>
+            </div>
+          </div>
+          <div id="areaPrecificacao" style="display: none">
+            <div class="card">
+              <h2 class="card-title" id="titleIngredientesReceita">
+                Ingredientes da Receita
+              </h2>
+              <div class="form-group">
+                <label>Ingrediente</label>
+                <select id="ingredienteSelect">
+                  <option value="">Selecione um ingrediente...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Quantidade Utilizada</label>
+                <input
+                  type="text"
+                  inputmode="decimal"
+                  id="quantidadeUsada"
+                  placeholder="Ex: 0,50"
+                  class="input-numerico"
+                />
+              </div>
+              <button
+                class="btn"
+                onclick="adicionarIngrediente()"
+                id="btnAdicionarIngrediente"
+              >
+                Adicionar Ingrediente
+              </button>
+              <div id="ingredientesAdicionados" style="margin-top: 20px"></div>
+            </div>
+            <div class="card">
+              <h2 class="card-title" id="titleProducao">Produção</h2>
+              <div class="form-group">
+                <label
+                  >Quantas unidades desta receita você produz em 1 hora?</label
+                >
+                <input
+                  type="text"
+                  inputmode="decimal"
+                  id="unidadesPorHora"
+                  placeholder="Ex: 4,00"
+                  class="input-numerico"
+                  oninput="calcularDespesaFixaRateada()"
+                />
+              </div>
+              <div id="despesaFixaRateadaInfo"></div>
+            </div>
+            <div class="card">
+              <h2 class="card-title" id="titleDespesasVariaveis">
+                Despesas Variáveis
+              </h2>
+              <div class="form-group">
+                <label>Impostos pagos na venda (%)</label>
+                <input
+                  type="text"
+                  inputmode="decimal"
+                  id="impostos"
+                  placeholder="Ex: 8,00"
+                  class="input-numerico"
+                />
+              </div>
+              <div class="form-group">
+                <label>Comissões de aplicativos (%)</label>
+                <input
+                  type="text"
+                  inputmode="decimal"
+                  id="comissoes"
+                  placeholder="Ex: 10,00"
+                  class="input-numerico"
+                />
+              </div>
+              <div class="form-group">
+                <label>Taxas de recebimento (%)</label>
+                <input
+                  type="text"
+                  inputmode="decimal"
+                  id="taxasRecebimento"
+                  placeholder="Ex: 3,50"
+                  class="input-numerico"
+                />
+              </div>
+              <div class="form-group">
+                <label>Despesa com embalagem (R$)</label>
+                <input
+                  type="text"
+                  inputmode="decimal"
+                  id="custoEmbalagem"
+                  placeholder="Ex: 2,50"
+                  class="input-numerico input-moeda"
+                />
+              </div>
+              <div class="form-group">
+                <label>Taxa de entrega (R$)</label>
+                <input
+                  type="text"
+                  inputmode="decimal"
+                  id="taxaEntrega"
+                  placeholder="Ex: 5,00"
+                  class="input-numerico input-moeda"
+                />
+              </div>
+              <div class="form-group">
+                <label>Outras despesas variáveis (%)</label>
+                <input
+                  type="text"
+                  inputmode="decimal"
+                  id="outrasDespesas"
+                  placeholder="Ex: 2,00"
+                  class="input-numerico"
+                />
+              </div>
+            </div>
+            <div class="card">
+              <h2 class="card-title" id="titleLucro">Margem de Lucro</h2>
+              <div class="form-group">
+                <label>Percentual de lucro líquido desejado (%)</label>
+                <input
+                  type="text"
+                  inputmode="decimal"
+                  id="margemLucro"
+                  placeholder="Ex: 20,00"
+                  class="input-numerico"
+                />
+              </div>
+            </div>
+            <div class="card">
+              <button
+                class="btn"
+                onclick="calcularPreco()"
+                style="width: 100%"
+                id="btnCalcular"
+              >
+                Calcular Preço Ideal
+              </button>
+              <div id="resultadoPrecificacao"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <!-- Modal de Detalhamento -->
+    <div class="modal-overlay" id="modalDetalhamento">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modalTitle">Detalhamento da Precificação</h2>
+          <button class="modal-close" onclick="fecharModal()">×</button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+        <div class="modal-footer">
+          <button
+            class="btn"
+            id="btnEditarPrecificacao"
+            onclick="editarPrecificacaoAtual()"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+              />
+              <path
+                d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+              />
+            </svg>
+            Editar Precificação
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Modal de Ajuda -->
+    <div class="modal-overlay help-modal" id="modalAjuda">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modalAjudaTitle">Ajuda</h2>
+          <button class="modal-close" onclick="fecharModalAjuda()">×</button>
+        </div>
+        <div class="modal-body" id="modalAjudaBody"></div>
+      </div>
+    </div>
+    <!-- Modal Custom Genérico (substitui alert/confirm nativos) -->
+    <div class="modal-overlay" id="modalCustom">
+      <div class="modal-content" style="max-width: 500px">
+        <div class="modal-header">
+          <h2 id="modalCustomTitle">Aviso</h2>
+          <button class="modal-close" onclick="fecharModalCustom()">×</button>
+        </div>
+        <div class="modal-body" id="modalCustomBody"></div>
+        <div class="modal-footer" id="modalCustomFooter"></div>
+      </div>
+    </div>
+    <script>
+      function formatarNumero(valor) {
+        if (isNaN(valor) || valor === null || valor === undefined)
+          return "0,00";
+        return Number(valor).toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+      }
+      function formatarMoeda(valor) {
+        return "R$ " + formatarNumero(valor);
+      }
+      function formatarPercentual(valor) {
+        return formatarNumero(valor) + "%";
+      }
+      function parseNumeroBR(str) {
+        if (str === null || str === undefined || str === "") return NaN;
+        const strLimpo = String(str).trim();
+        const normalizado = strLimpo.replace(/\./g, "").replace(",", ".");
+        return parseFloat(normalizado);
+      }
+      function lerInput(id) {
+        const input = document.getElementById(id);
+        return parseNumeroBR(input.value);
+      }
+      function formatarInputOnBlur(event) {
+        const input = event.target;
+        const valor = parseNumeroBR(input.value);
+        if (!isNaN(valor) && input.value.trim() !== "") {
+          input.value = formatarNumero(valor);
+        }
+      }
+      function filtrarInputNumerico(event) {
+        const input = event.target;
+        const char = event.key;
+        const permitidos = [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9",
+          ".",
+          ",",
+          "Backspace",
+          "Delete",
+          "Tab",
+          "ArrowLeft",
+          "ArrowRight",
+          "ArrowUp",
+          "ArrowDown",
+          "Home",
+          "End",
+        ];
+        if (!permitidos.includes(char) && !event.ctrlKey && !event.metaKey) {
+          event.preventDefault();
+        }
+      }
+      const ICONS = {
+        receitas:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>',
+        despesas:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/><path d="M9 9h1M14 9h1M9 13h1M14 13h1"/></svg>',
+        ingredientes:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8 6 6 10 6 14a6 6 0 0 0 12 0c0-4-2-8-6-12z"/><path d="M12 22v-8"/></svg>',
+        precificacao:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+        salvar:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>',
+        excluir:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>',
+        editar:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
+        adicionar:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
+        calcular:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><circle cx="9" cy="11" r="1"/><circle cx="15" cy="11" r="1"/><circle cx="9" cy="16" r="1"/><circle cx="15" cy="16" r="1"/></svg>',
+        relogio:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+        alerta:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+        grafico:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+        menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>',
+        info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+        caixa:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
+        excel:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="12" y1="9" x2="12" y2="21"/></svg>',
+        pdf: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 13h2a1 1 0 1 0 0-2H9v5"/><path d="M15 16v-5h2a1.5 1.5 0 0 1 0 3h-2"/></svg>',
+        soma: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 18 10 12 4 6"/><line x1="12" y1="18" x2="20" y2="18"/></svg>',
+        detalhes:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
+        casa: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+        camera:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>',
+      };
+      function icon(name, size = 20) {
+        return `<span style="display:inline-flex;width:${size}px;height:${size}px;">${ICONS[name] || ""}</span>`;
+      }
+
+      /* ============================================================
+   SISTEMA DE MODAIS CUSTOMIZADOS (substitui alert/confirm)
+   ============================================================ */
+      function abrirModalCustom(titulo, corpoHTML, botoes) {
+        document.getElementById("modalCustomTitle").textContent = titulo;
+        document.getElementById("modalCustomBody").innerHTML = corpoHTML;
+        const footer = document.getElementById("modalCustomFooter");
+        footer.innerHTML = "";
+        botoes.forEach((btn) => {
+          const button = document.createElement("button");
+          button.className = btn.classe || "btn";
+          button.textContent = btn.texto;
+          button.onclick = () => {
+            if (btn.onclick) btn.onclick();
+          };
+          footer.appendChild(button);
+        });
+        document.getElementById("modalCustom").classList.add("active");
+      }
+
+      function fecharModalCustom() {
+        document.getElementById("modalCustom").classList.remove("active");
+      }
+
+      function showAlertCustom(mensagem, callback) {
+        abrirModalCustom(
+          "Aviso",
+          `<p style="font-size: 1rem; line-height: 1.6; margin: 0;">${mensagem}</p>`,
+          [
+            {
+              texto: "OK",
+              classe: "btn",
+              onclick: () => {
+                fecharModalCustom();
+                if (callback) callback();
+              },
+            },
+          ],
+        );
+      }
+
+      function showConfirmCustom(mensagem, onConfirm, onCancel) {
+        abrirModalCustom(
+          "Confirmação",
+          `<p style="font-size: 1rem; line-height: 1.6; margin: 0;">${mensagem}</p>`,
+          [
+            {
+              texto: "Cancelar",
+              classe: "btn-secondary",
+              onclick: () => {
+                fecharModalCustom();
+                if (onCancel) onCancel();
+              },
+            },
+            {
+              texto: "Confirmar",
+              classe: "btn",
+              onclick: () => {
+                fecharModalCustom();
+                if (onConfirm) onConfirm();
+              },
+            },
+          ],
+        );
+      }
+
+      let db;
+      const DB_NAME = "PrecificaDB";
+      const DB_VERSION = 3;
+      function initDB() {
+        return new Promise((resolve, reject) => {
+          const request = indexedDB.open(DB_NAME, DB_VERSION);
+          request.onerror = () => reject(request.error);
+          request.onsuccess = () => {
+            db = request.result;
+            resolve(db);
+          };
+          request.onupgradeneeded = (event) => {
+            const database = event.target.result;
+            if (!database.objectStoreNames.contains("receitas")) {
+              const receitaStore = database.createObjectStore("receitas", {
+                keyPath: "id",
+                autoIncrement: true,
+              });
+              receitaStore.createIndex("nome", "nome", { unique: false });
+            }
+            if (!database.objectStoreNames.contains("ingredientes")) {
+              const ingredienteStore = database.createObjectStore(
+                "ingredientes",
+                { keyPath: "id", autoIncrement: true },
+              );
+              ingredienteStore.createIndex("nome", "nome", { unique: false });
+            }
+            if (!database.objectStoreNames.contains("despesasFixas")) {
+              const despesaStore = database.createObjectStore("despesasFixas", {
+                keyPath: "id",
+                autoIncrement: true,
+              });
+              despesaStore.createIndex("nome", "nome", { unique: false });
+            }
+            if (!database.objectStoreNames.contains("config")) {
+              database.createObjectStore("config", { keyPath: "chave" });
+            }
+            if (!database.objectStoreNames.contains("precificacoes")) {
+              const precificacaoStore = database.createObjectStore(
+                "precificacoes",
+                { keyPath: "id", autoIncrement: true },
+              );
+              precificacaoStore.createIndex("receitaId", "receitaId", {
+                unique: false,
+              });
+            }
+          };
+        });
+      }
+      function getAllData(storeName) {
+        return new Promise((resolve, reject) => {
+          const transaction = db.transaction([storeName], "readonly");
+          const store = transaction.objectStore(storeName);
+          const request = store.getAll();
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      }
+      function inicializarIcones() {
+        document.getElementById("menuToggle").innerHTML = ICONS.menu;
+        const navItems = [
+          { id: "receitas", label: "Receitas", icon: "receitas" },
+          { id: "despesasFixas", label: "Despesas Fixas", icon: "casa" },
+          { id: "ingredientes", label: "Ingredientes", icon: "ingredientes" },
+          { id: "precificacao", label: "Precificação", icon: "precificacao" },
+        ];
+        const sidebarNav = document.getElementById("sidebarNav");
+        sidebarNav.innerHTML = navItems
+          .map(
+            (item, index) => `
+<button class="nav-btn ${index === 0 ? "active" : ""}" onclick="showPage('${item.id}', this)">
+<span class="nav-icon">${ICONS[item.icon]}</span>
+<span>${item.label}</span>
+</button>
+`,
+          )
+          .join("");
+        document.getElementById("titleReceitas").innerHTML =
+          `<span class="card-title-icon">${ICONS.receitas}</span> Cadastrar Nova Receita`;
+        document.getElementById("titleListaReceitas").innerHTML =
+          `<span class="card-title-icon">${ICONS.receitas}</span> Receitas Cadastradas`;
+        document.getElementById("titleHoras").innerHTML =
+          `<span class="card-title-icon">${ICONS.relogio}</span> Horas de Trabalho`;
+        document.getElementById("titleNovaDespesa").innerHTML =
+          `<span class="card-title-icon">${ICONS.casa}</span> Nova Despesa Fixa`;
+        document.getElementById("titleListaDespesas").innerHTML =
+          `<span class="card-title-icon">${ICONS.casa}</span> Despesas Fixas Cadastradas`;
+        document.getElementById("titleIngrediente").innerHTML =
+          `<span class="card-title-icon">${ICONS.ingredientes}</span> Cadastrar Novo Ingrediente`;
+        document.getElementById("titleListaIngredientes").innerHTML =
+          `<span class="card-title-icon">${ICONS.ingredientes}</span> Ingredientes Cadastrados`;
+        document.getElementById("titleSelecionar").innerHTML =
+          `<span class="card-title-icon">${ICONS.precificacao}</span> Selecionar Receita`;
+        document.getElementById("titleIngredientesReceita").innerHTML =
+          `<span class="card-title-icon">${ICONS.ingredientes}</span> Ingredientes da Receita`;
+        document.getElementById("titleProducao").innerHTML =
+          `<span class="card-title-icon">${ICONS.caixa}</span> Produção`;
+        document.getElementById("titleDespesasVariaveis").innerHTML =
+          `<span class="card-title-icon">${ICONS.grafico}</span> Despesas Variáveis`;
+        document.getElementById("titleLucro").innerHTML =
+          `<span class="card-title-icon">${ICONS.precificacao}</span> Margem de Lucro`;
+        document.getElementById("btnSalvarReceita").innerHTML =
+          `${icon("salvar", 16)} Salvar Receita`;
+        document.getElementById("btnSalvarHoras").innerHTML =
+          `${icon("salvar", 16)} Salvar Horas`;
+        document.getElementById("btnSalvarDespesa").innerHTML =
+          `${icon("salvar", 16)} Salvar Despesa`;
+        document.getElementById("btnSalvarIngrediente").innerHTML =
+          `${icon("salvar", 16)} Salvar Ingrediente`;
+        document.getElementById("btnAdicionarIngrediente").innerHTML =
+          `${icon("adicionar", 16)} Adicionar Ingrediente`;
+        document.getElementById("btnCalcular").innerHTML =
+          `${icon("calcular", 16)} Calcular Preço Ideal`;
+      }
+      function inicializarInputsNumericos() {
+        document.querySelectorAll(".input-numerico").forEach((input) => {
+          input.addEventListener("keydown", filtrarInputNumerico);
+          input.addEventListener("blur", formatarInputOnBlur);
+        });
+      }
+      function toggleSidebar() {
+        document.getElementById("sidebar").classList.toggle("open");
+        document.getElementById("overlay").classList.toggle("active");
+      }
+
+      /* ============================================================
+   NAVEGAÇÃO COM INTERCEPTAÇÃO (aviso ao sair da precificação)
+   ============================================================ */
+      function showPage(pageId, btn) {
+        const paginaAtual = document.querySelector(".page.active");
+        // Se está saindo da tela de precificação e há dados não salvos
+        if (
+          paginaAtual &&
+          paginaAtual.id === "precificacao" &&
+          pageId !== "precificacao"
+        ) {
+          if (ingredientesReceitaAtual.length > 0 || ultimoCalculo !== null) {
+            showConfirmCustom(
+              "Você possui dados de precificação em andamento que não foram salvos. Deseja realmente sair? Os dados serão perdidos.",
+              () => {
+                ingredientesReceitaAtual = [];
+                ultimoCalculo = null;
+                limparTelaPrecificacao();
+                executarNavegacao(pageId, btn);
+              },
+            );
+            return;
+          }
+        }
+        executarNavegacao(pageId, btn);
+      }
+
+      function executarNavegacao(pageId, btn) {
+        document
+          .querySelectorAll(".page")
+          .forEach((page) => page.classList.remove("active"));
+        document
+          .querySelectorAll(".nav-btn")
+          .forEach((b) => b.classList.remove("active"));
+        document.getElementById(pageId).classList.add("active");
+        btn.classList.add("active");
+        const titulos = {
+          receitas: {
+            title: "Receitas",
+            sub: "Gerencie suas receitas com facilidade",
+          },
+          despesasFixas: {
+            title: "Despesas Fixas",
+            sub: "Controle os custos mensais da sua empresa",
+          },
+          ingredientes: {
+            title: "Ingredientes",
+            sub: "Cadastre os insumos utilizados nas receitas",
+          },
+          precificacao: {
+            title: "Precificação",
+            sub: "Calcule o preço ideal de venda",
+          },
+        };
+        document.getElementById("pageTitle").textContent =
+          titulos[pageId].title;
+        document.getElementById("pageSubtitle").textContent =
+          titulos[pageId].sub;
+        if (window.innerWidth <= 992) {
+          document.getElementById("sidebar").classList.remove("open");
+          document.getElementById("overlay").classList.remove("active");
+        }
+        if (pageId === "receitas") carregarReceitas();
+        if (pageId === "despesasFixas") {
+          carregarDespesas();
+          carregarHorasTrabalho();
+        }
+        if (pageId === "ingredientes") carregarIngredientes();
+        if (pageId === "precificacao") carregarReceitasSelect();
+      }
+
+      function limparTelaPrecificacao() {
+        document.getElementById("receitaSelect").value = "";
+        document.getElementById("areaPrecificacao").style.display = "none";
+        document.getElementById("ingredienteSelect").innerHTML =
+          '<option value="">Selecione um ingrediente...</option>';
+        document.getElementById("quantidadeUsada").value = "";
+        document.getElementById("unidadesPorHora").value = "";
+        document.getElementById("impostos").value = "";
+        document.getElementById("comissoes").value = "";
+        document.getElementById("taxasRecebimento").value = "";
+        document.getElementById("custoEmbalagem").value = "";
+        document.getElementById("taxaEntrega").value = "";
+        document.getElementById("outrasDespesas").value = "";
+        document.getElementById("margemLucro").value = "";
+        document.getElementById("ingredientesAdicionados").innerHTML = "";
+        document.getElementById("resultadoPrecificacao").innerHTML = "";
+        document.getElementById("despesaFixaRateadaInfo").innerHTML = "";
+        ingredientesReceitaAtual = [];
+        ultimoCalculo = null;
+      }
+
+      async function exportarBackup() {
+        try {
+          const backup = {
+            versao: "1.0",
+            dataBackup: new Date().toISOString(),
+            dados: {
+              receitas: await getAllData("receitas"),
+              ingredientes: await getAllData("ingredientes"),
+              despesasFixas: await getAllData("despesasFixas"),
+              config: await getAllData("config"),
+              precificacoes: await getAllData("precificacoes"),
+            },
+          };
+          const blob = new Blob([JSON.stringify(backup, null, 2)], {
+            type: "application/json",
+          });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          const dataStr = new Date().toISOString().split("T")[0];
+          a.download = `backup_precifica_${dataStr}.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          showAlertCustom(
+            "✅ Backup exportado com sucesso!<br><br>Arquivo: <strong>backup_precifica_" +
+              dataStr +
+              ".json</strong><br><br>Guarde este arquivo em um local seguro.",
+          );
+        } catch (error) {
+          console.error("Erro ao exportar backup:", error);
+          showAlertCustom(" Erro ao exportar backup. Tente novamente.");
+        }
+      }
+      function importarBackup(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          try {
+            const backup = JSON.parse(e.target.result);
+            if (!backup.versao || !backup.dados) {
+              throw new Error("Arquivo de backup inválido");
+            }
+            const dados = backup.dados;
+            const resumo = {
+              receitas: dados.receitas ? dados.receitas.length : 0,
+              ingredientes: dados.ingredientes ? dados.ingredientes.length : 0,
+              despesasFixas: dados.despesasFixas
+                ? dados.despesasFixas.length
+                : 0,
+              precificacoes: dados.precificacoes
+                ? dados.precificacoes.length
+                : 0,
+            };
+            showConfirmCustom(
+              `📋 <strong>RESUMO DO BACKUP</strong><br><br>Dados a serem importados:<br>• ${resumo.receitas} receitas<br>• ${resumo.ingredientes} ingredientes<br>• ${resumo.despesasFixas} despesas fixas<br>• ${resumo.precificacoes} precificações<br><br>⚠️ <strong>ATENÇÃO:</strong> Todos os dados atuais serão SUBSTITUÍDOS.<br><br>Deseja continuar com a importação?`,
+              () => {
+                importAllData(dados);
+                showAlertCustom(
+                  `✅ Backup importado com sucesso!<br><br>${resumo.receitas} receitas, ${resumo.ingredientes} ingredientes, ${resumo.despesasFixas} despesas e ${resumo.precificacoes} precificações foram restaurados.`,
+                );
+                location.reload();
+              },
+            );
+          } catch (error) {
+            console.error("Erro ao importar backup:", error);
+            showAlertCustom(
+              "❌ Erro ao importar backup.<br>Verifique se o arquivo é válido.",
+            );
+          }
+          input.value = "";
+        };
+        reader.readAsText(file);
+      }
+      function importAllData(dados) {
+        if (dados.receitas && dados.receitas.length > 0) {
+          const transaction = db.transaction(["receitas"], "readwrite");
+          const store = transaction.objectStore("receitas");
+          store.clear();
+          dados.receitas.forEach((item) => store.add(item));
+        }
+        if (dados.ingredientes && dados.ingredientes.length > 0) {
+          const transaction = db.transaction(["ingredientes"], "readwrite");
+          const store = transaction.objectStore("ingredientes");
+          store.clear();
+          dados.ingredientes.forEach((item) => store.add(item));
+        }
+        if (dados.despesasFixas && dados.despesasFixas.length > 0) {
+          const transaction = db.transaction(["despesasFixas"], "readwrite");
+          const store = transaction.objectStore("despesasFixas");
+          store.clear();
+          dados.despesasFixas.forEach((item) => store.add(item));
+        }
+        if (dados.config && dados.config.length > 0) {
+          const transaction = db.transaction(["config"], "readwrite");
+          const store = transaction.objectStore("config");
+          store.clear();
+          dados.config.forEach((item) => store.put(item));
+        }
+        if (dados.precificacoes && dados.precificacoes.length > 0) {
+          const transaction = db.transaction(["precificacoes"], "readwrite");
+          const store = transaction.objectStore("precificacoes");
+          store.clear();
+          dados.precificacoes.forEach((item) => store.add(item));
+        }
+      }
+      function mostrarAjudaExportar() {
+        const modal = document.getElementById("modalAjuda");
+        const title = document.getElementById("modalAjudaTitle");
+        const body = document.getElementById("modalAjudaBody");
+        title.textContent = "Exportar Backup";
+        body.innerHTML = `
+<p><strong>O que acontece ao exportar o backup?</strong></p>
+<p>Ao clicar em "Exportar Backup", o sistema cria um arquivo JSON contendo <strong>TODOS os seus dados</strong>:</p>
+<ul>
+<li>✓ Todas as receitas cadastradas</li>
+<li>✓ Todos os ingredientes</li>
+<li>✓ Todas as despesas fixas</li>
+<li>✓ Configurações (horas de trabalho)</li>
+<li>✓ Histórico completo de precificações</li>
+</ul>
+<div class="alert-box">
+<strong>⚠️ IMPORTANTE:</strong><br>
+<strong>SEMPRE faça backup ANTES de limpar os dados do navegador!</strong><br><br>
+Se você limpar o cache, cookies ou dados de navegação, <strong>todos os seus dados serão perdidos permanentemente</strong> se não tiver feito o backup antes.
+</div>
+<p><strong>Recomendações:</strong></p>
+<ul>
+<li>Faça backup <strong>periodicamente</strong> (semanal ou mensalmente)</li>
+<li>Guarde o arquivo em locais seguros (Google Drive, OneDrive, pen drive)</li>
+<li>Mantenha cópias em mais de um lugar</li>
+<li>Nomeie o arquivo com a data para facilitar a identificação</li>
+</ul>
+<p><strong>Quando exportar:</strong></p>
+<ul>
+<li>Antes de trocar de computador ou navegador</li>
+<li>Antes de limpar dados do navegador</li>
+<li>Após cadastrar receitas importantes</li>
+<li>No final de cada mês (rotina)</li>
+</ul>
+`;
+        modal.classList.add("active");
+      }
+      function mostrarAjudaImportar() {
+        const modal = document.getElementById("modalAjuda");
+        const title = document.getElementById("modalAjudaTitle");
+        const body = document.getElementById("modalAjudaBody");
+        title.textContent = "Importar Backup";
+        body.innerHTML = `
+<p><strong>O que acontece ao importar um backup?</strong></p>
+<p>Ao importar um backup, o sistema <strong>substitui TODOS os dados atuais</strong> pelos dados contidos no arquivo de backup.</p>
+<div class="alert-box">
+<strong>⚠️ ATENÇÃO:</strong><br>
+• Os dados atuais serão <strong>COMPLETAMENTE SUBSTITUÍDOS</strong><br>
+• Não há como desfazer esta operação<br>
+• Certifique-se de que está importando o backup correto
+</div>
+<p><strong>Quando importar:</strong></p>
+<ul>
+<li>Ao trocar de computador ou navegador</li>
+<li>Após limpar acidentalmente os dados do navegador</li>
+<li>Para restaurar dados de um backup anterior</li>
+<li>Para sincronizar dados entre dispositivos</li>
+</ul>
+<p><strong>Como funciona:</strong></p>
+<ol>
+<li>Clique em "Importar Backup"</li>
+<li>Selecione o arquivo JSON do backup</li>
+<li>O sistema mostra um resumo dos dados</li>
+<li>Confirme a importação</li>
+<li>A página recarrega automaticamente com os dados restaurados</li>
+</ol>
+<p><strong>Dica:</strong> Antes de importar, faça um backup dos dados atuais (caso queira preservá-los).</p>
+`;
+        modal.classList.add("active");
+      }
+      function fecharModalAjuda() {
+        document.getElementById("modalAjuda").classList.remove("active");
+      }
+      let fotoReceitaAtual = null;
+      let receitaIdEditando = null;
+      function salvarReceita() {
+        const nome = document.getElementById("receitaNome").value.trim();
+        if (!nome) {
+          showAlertCustom("Por favor, informe o nome da receita.");
+          return;
+        }
+        const receita = { nome: nome, preco: 0 };
+        const transaction = db.transaction(["receitas"], "readwrite");
+        const store = transaction.objectStore("receitas");
+        const request = store.add(receita);
+        request.onsuccess = () => {
+          showAlertCustom("✅ Receita cadastrada com sucesso!");
+          document.getElementById("receitaNome").value = "";
+          carregarReceitas();
+        };
+        request.onerror = () => showAlertCustom("❌ Erro ao salvar receita.");
+      }
+      function editarReceita(id) {
+        const transaction = db.transaction(["receitas"], "readonly");
+        const store = transaction.objectStore("receitas");
+        const request = store.get(id);
+        request.onsuccess = () => {
+          const receita = request.result;
+          const novoNome = prompt("Nome da receita:", receita.nome);
+          if (novoNome === null) return;
+          if (!novoNome.trim()) {
+            showAlertCustom("O nome não pode estar vazio.");
+            return;
+          }
+          receita.nome = novoNome.trim();
+          const updateTx = db.transaction(["receitas"], "readwrite");
+          const updateStore = updateTx.objectStore("receitas");
+          const updateReq = updateStore.put(receita);
+          updateReq.onsuccess = () => carregarReceitas();
+        };
+      }
+      function carregarReceitas() {
+        const transaction = db.transaction(["receitas"], "readonly");
+        const store = transaction.objectStore("receitas");
+        const request = store.getAll();
+        request.onsuccess = () => {
+          let receitas = request.result;
+          receitas.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+          const search = document
+            .getElementById("searchReceitas")
+            .value.toLowerCase();
+          if (search) {
+            receitas = receitas.filter((r) =>
+              r.nome.toLowerCase().includes(search),
+            );
+          }
+          const lista = document.getElementById("listaReceitas");
+          if (receitas.length === 0) {
+            lista.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.receitas}</div><p>${search ? "Nenhuma receita encontrada com esse nome" : "Nenhuma receita cadastrada ainda"}</p></div>`;
+            return;
+          }
+          lista.innerHTML = receitas
+            .map((receita) => {
+              const photoHtml = receita.foto
+                ? `<img src="${receita.foto}" alt="${receita.nome}" class="receita-photo">`
+                : `<div class="receita-photo-placeholder">${ICONS.camera}</div>`;
+              return `
+<div class="list-item">
+<div class="list-item-with-photo">
+${photoHtml}
+<div class="list-item-info">
+<strong>${receita.nome}</strong>
+<p class="price-highlight">Preço de venda: ${formatarMoeda(receita.preco || 0)}</p>
+${receita.lucro ? `<p class="lucro-highlight">Lucro: ${formatarMoeda(receita.lucro)}</p>` : ""}
+</div>
+</div>
+<div class="list-item-actions">
+<button class="btn btn-action" onclick="editarReceita(${receita.id})">
+<span class="btn-icon">${ICONS.editar}</span>
+<span>Editar</span>
+</button>
+<button class="btn btn-action btn-delete" onclick="excluirReceita(${receita.id})">
+<span class="btn-icon">${ICONS.excluir}</span>
+<span>Excluir</span>
+</button>
+<button class="btn btn-action btn-details" onclick="verDetalhamento(${receita.id})">
+<span class="btn-icon">${ICONS.detalhes}</span>
+<span>Ver detalhamento</span>
+</button>
+<input type="file" id="foto-input-${receita.id}" accept="image/*" class="photo-input-hidden" onchange="salvarFotoReceita(${receita.id}, this)">
+${
+  receita.foto
+    ? `<button class="photo-remove-btn" onclick="removerFotoReceita(${receita.id})">Remover foto</button>`
+    : `<button class="photo-upload-btn" onclick="document.getElementById('foto-input-${receita.id}').click()">Adicionar foto</button>`
+}
+</div>
+</div>
+`;
+            })
+            .join("");
+        };
+      }
+      function filtrarReceitas() {
+        carregarReceitas();
+      }
+      function salvarFotoReceita(receitaId, input) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const fotoBase64 = e.target.result;
+          const transaction = db.transaction(["receitas"], "readwrite");
+          const store = transaction.objectStore("receitas");
+          const request = store.get(receitaId);
+          request.onsuccess = () => {
+            const receita = request.result;
+            receita.foto = fotoBase64;
+            const updateReq = store.put(receita);
+            updateReq.onsuccess = () => carregarReceitas();
+          };
+        };
+        reader.readAsDataURL(file);
+      }
+      function removerFotoReceita(receitaId) {
+        showConfirmCustom("Deseja remover a foto desta receita?", () => {
+          const transaction = db.transaction(["receitas"], "readwrite");
+          const store = transaction.objectStore("receitas");
+          const request = store.get(receitaId);
+          request.onsuccess = () => {
+            const receita = request.result;
+            delete receita.foto;
+            const updateReq = store.put(receita);
+            updateReq.onsuccess = () => carregarReceitas();
+          };
+        });
+      }
+      function excluirReceita(id) {
+        showConfirmCustom(
+          "Tem certeza que deseja excluir esta receita?",
+          () => {
+            const transaction = db.transaction(["receitas"], "readwrite");
+            const store = transaction.objectStore("receitas");
+            const request = store.delete(id);
+            request.onsuccess = () => carregarReceitas();
+          },
+        );
+      }
+      function verDetalhamento(receitaId) {
+        const transaction = db.transaction(["precificacoes"], "readonly");
+        const store = transaction.objectStore("precificacoes");
+        const index = store.index("receitaId");
+        const request = index.getAll(receitaId);
+        request.onsuccess = () => {
+          const precificacoes = request.result;
+          if (precificacoes.length === 0) {
+            showAlertCustom(
+              "Nenhuma precificação encontrada para esta receita.",
+            );
+            return;
+          }
+          const precificacao = precificacoes.sort(
+            (a, b) => new Date(b.data) - new Date(a.data),
+          )[0];
+          precificacaoAtual = precificacao;
+          mostrarModalDetalhamento(precificacao);
+        };
+      }
+      let precificacaoAtual = null;
+      function mostrarModalDetalhamento(precificacao) {
+        const modal = document.getElementById("modalDetalhamento");
+        const modalTitle = document.getElementById("modalTitle");
+        const modalBody = document.getElementById("modalBody");
+        modalTitle.textContent = `Detalhamento: ${precificacao.receitaNome}`;
+        const dataFormatada = new Date(precificacao.data).toLocaleString(
+          "pt-BR",
+        );
+        let html = `
+<div class="detail-section">
+<h3>Informações Gerais</h3>
+<div class="detail-grid">
+<div class="detail-item">
+<div class="detail-item-label">Data da Precificação</div>
+<div class="detail-item-value">${dataFormatada}</div>
+</div>
+<div class="detail-item">
+<div class="detail-item-label">Unidades por Hora</div>
+<div class="detail-item-value">${formatarNumero(precificacao.unidadesPorHora)} un/h</div>
+</div>
+<div class="detail-item">
+<div class="detail-item-label">Preço de Venda</div>
+<div class="detail-item-value" style="color: var(--verde-profundo); font-size: 1.2rem;">${formatarMoeda(precificacao.precoVenda)}</div>
+</div>
+<div class="detail-item">
+<div class="detail-item-label">Lucro Líquido</div>
+<div class="detail-item-value" style="color: var(--verde-profundo);">${formatarMoeda(precificacao.lucroLiquido)}</div>
+</div>
+</div>
+</div>
+<div class="detail-section">
+<h3>Ingredientes</h3>
+<div style="margin-bottom: 12px;">
+${precificacao.ingredientes
+  .map(
+    (ing) => `
+<div style="display: flex; justify-content: space-between; padding: 8px 12px; background: var(--cinza-suave); margin-bottom: 6px; border-radius: 6px;">
+<span>${ing.nome} (${formatarNumero(ing.quantidade)} ${ing.unidade})</span>
+<strong>${formatarMoeda(ing.custoTotal)}</strong>
+</div>
+`,
+  )
+  .join("")}
+</div>
+<div style="background: var(--verde-claro); padding: 12px; border-radius: 6px; text-align: right;">
+<strong>Total de Ingredientes: ${formatarMoeda(precificacao.totalIngredientes)}</strong>
+</div>
+</div>
+<div class="detail-section">
+<h3>Custos Diretos</h3>
+<div class="detail-grid">
+<div class="detail-item">
+<div class="detail-item-label">Ingredientes</div>
+<div class="detail-item-value">${formatarMoeda(precificacao.totalIngredientes)}</div>
+</div>
+<div class="detail-item">
+<div class="detail-item-label">Despesa Fixa Rateada</div>
+<div class="detail-item-value">${formatarMoeda(precificacao.despesaFixaProporcional)}</div>
+</div>
+<div class="detail-item">
+<div class="detail-item-label">Embalagem</div>
+<div class="detail-item-value">${formatarMoeda(precificacao.custoEmbalagem)}</div>
+</div>
+<div class="detail-item">
+<div class="detail-item-label">Taxa de Entrega</div>
+<div class="detail-item-value">${formatarMoeda(precificacao.taxaEntrega)}</div>
+</div>
+</div>
+<div style="margin-top: 12px; background: var(--bege-medio); padding: 12px; border-radius: 6px; text-align: right;">
+<strong>Total Custos Diretos: ${formatarMoeda(precificacao.numerador)}</strong>
+</div>
+</div>
+<div class="detail-section">
+<h3>Percentuais</h3>
+<div class="detail-grid">
+<div class="detail-item">
+<div class="detail-item-label">Impostos</div>
+<div class="detail-item-value">${formatarPercentual(precificacao.impostos)}</div>
+</div>
+<div class="detail-item">
+<div class="detail-item-label">Comissões</div>
+<div class="detail-item-value">${formatarPercentual(precificacao.comissoes)}</div>
+</div>
+<div class="detail-item">
+<div class="detail-item-label">Taxas de Recebimento</div>
+<div class="detail-item-value">${formatarPercentual(precificacao.taxasRecebimento)}</div>
+</div>
+<div class="detail-item">
+<div class="detail-item-label">Outras Despesas</div>
+<div class="detail-item-value">${formatarPercentual(precificacao.outrasDespesas)}</div>
+</div>
+<div class="detail-item">
+<div class="detail-item-label">Margem de Lucro</div>
+<div class="detail-item-value">${formatarPercentual(precificacao.margemLucro)}</div>
+</div>
+</div>
+<div style="margin-top: 12px; background: var(--bege-medio); padding: 12px; border-radius: 6px;">
+<div style="display: flex; justify-content: space-between;">
+<strong>Soma dos Percentuais:</strong>
+<strong>${formatarPercentual(precificacao.somaPercentuais)}</strong>
+</div>
+</div>
+</div>
+<div class="detail-section">
+<h3>Fórmula Aplicada</h3>
+<div style="background: var(--cinza-suave); padding: 16px; border-radius: 8px; font-family: monospace; font-size: 0.9rem;">
+<div style="margin-bottom: 8px;">Preço = (Custos Diretos) / (1 - Soma dos Percentuais)</div>
+<div style="color: var(--verde-profundo); font-weight: 600;">
+Preço = ${formatarMoeda(precificacao.numerador)} / ${formatarNumero(precificacao.denominador)} = <strong>${formatarMoeda(precificacao.precoVenda)}</strong>
+</div>
+</div>
+</div>
+`;
+        modalBody.innerHTML = html;
+        modal.classList.add("active");
+      }
+      function editarPrecificacaoAtual() {
+        if (!precificacaoAtual) return;
+        const prec = precificacaoAtual;
+        fecharModal();
+        const btnPrecificacao = document.querySelector(
+          '.nav-btn[onclick*="precificacao"]',
+        );
+        showPage("precificacao", btnPrecificacao);
+        setTimeout(() => {
+          document.getElementById("receitaSelect").value = prec.receitaId;
+          carregarIngredientesReceita();
+          setTimeout(() => {
+            document.getElementById("unidadesPorHora").value = formatarNumero(
+              prec.unidadesPorHora,
+            );
+            document.getElementById("impostos").value = formatarNumero(
+              prec.impostos,
+            );
+            document.getElementById("comissoes").value = formatarNumero(
+              prec.comissoes,
+            );
+            document.getElementById("taxasRecebimento").value = formatarNumero(
+              prec.taxasRecebimento,
+            );
+            document.getElementById("custoEmbalagem").value = formatarNumero(
+              prec.custoEmbalagem,
+            );
+            document.getElementById("taxaEntrega").value = formatarNumero(
+              prec.taxaEntrega,
+            );
+            document.getElementById("outrasDespesas").value = formatarNumero(
+              prec.outrasDespesas,
+            );
+            document.getElementById("margemLucro").value = formatarNumero(
+              prec.margemLucro,
+            );
+            ingredientesReceitaAtual = [];
+            prec.ingredientes.forEach((ing) => {
+              ingredientesReceitaAtual.push({
+                id: ing.id,
+                nome: ing.nome,
+                unidade: ing.unidade,
+                quantidade: ing.quantidade,
+                custoUnitario: ing.custoUnitario,
+                custoTotal: ing.custoTotal,
+              });
+            });
+            atualizarListaIngredientes();
+            calcularDespesaFixaRateada();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            showAlertCustom(
+              '✅ Precificação carregada para edição!<br><br>Você pode ajustar os valores e clicar em "Calcular Preço Ideal" para atualizar.',
+            );
+          }, 500);
+        }, 300);
+      }
+      function fecharModal() {
+        document.getElementById("modalDetalhamento").classList.remove("active");
+      }
+      document
+        .getElementById("modalDetalhamento")
+        .addEventListener("click", function (e) {
+          if (e.target === this) fecharModal();
+        });
+      document
+        .getElementById("modalAjuda")
+        .addEventListener("click", function (e) {
+          if (e.target === this) fecharModalAjuda();
+        });
+      document
+        .getElementById("modalCustom")
+        .addEventListener("click", function (e) {
+          if (e.target === this) fecharModalCustom();
+        });
+      function salvarHorasTrabalho() {
+        const horas = lerInput("horasTrabalho");
+        if (isNaN(horas) || horas <= 0) {
+          showAlertCustom(
+            "Por favor, informe um valor válido para as horas de trabalho.",
+          );
+          return;
+        }
+        const transaction = db.transaction(["config"], "readwrite");
+        const store = transaction.objectStore("config");
+        const request = store.put({ chave: "horasTrabalho", valor: horas });
+        request.onsuccess = () => {
+          showAlertCustom("✅ Horas de trabalho salvas com sucesso!");
+          carregarHorasTrabalho();
+          carregarDespesas();
+        };
+      }
+      function carregarHorasTrabalho() {
+        const transaction = db.transaction(["config"], "readonly");
+        const store = transaction.objectStore("config");
+        const request = store.get("horasTrabalho");
+        request.onsuccess = () => {
+          const config = request.result;
+          if (config) {
+            document.getElementById("horasTrabalho").value = formatarNumero(
+              config.valor,
+            );
+          }
+        };
+      }
+      function salvarDespesa() {
+        const nome = document.getElementById("despesaNome").value.trim();
+        const valor = lerInput("despesaValor");
+        if (!nome || isNaN(valor)) {
+          showAlertCustom("Por favor, preencha todos os campos corretamente.");
+          return;
+        }
+        const despesa = { nome: nome, valor: valor };
+        const transaction = db.transaction(["despesasFixas"], "readwrite");
+        const store = transaction.objectStore("despesasFixas");
+        const request = store.add(despesa);
+        request.onsuccess = () => {
+          showAlertCustom("✅ Despesa cadastrada com sucesso!");
+          document.getElementById("despesaNome").value = "";
+          document.getElementById("despesaValor").value = "";
+          carregarDespesas();
+        };
+        request.onerror = () => showAlertCustom(" Erro ao salvar despesa.");
+      }
+      function carregarDespesas() {
+        const transaction = db.transaction(["despesasFixas"], "readonly");
+        const store = transaction.objectStore("despesasFixas");
+        const request = store.getAll();
+        request.onsuccess = () => {
+          let despesas = request.result;
+          despesas.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+          const search = document
+            .getElementById("searchDespesas")
+            .value.toLowerCase();
+          if (search) {
+            despesas = despesas.filter((d) =>
+              d.nome.toLowerCase().includes(search),
+            );
+          }
+          const lista = document.getElementById("listaDespesas");
+          const somatoriaDiv = document.getElementById("somatoriaDespesas");
+          const horasInfoDiv = document.getElementById("horasInfo");
+          if (despesas.length === 0) {
+            lista.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.casa}</div><p>${search ? "Nenhuma despesa encontrada com esse nome" : "Nenhuma despesa cadastrada ainda"}</p></div>`;
+            somatoriaDiv.innerHTML = "";
+            return;
+          }
+          lista.innerHTML = despesas
+            .map(
+              (d) => `
+<div class="list-item">
+<div class="list-item-info">
+<strong>${d.nome}</strong>
+<p>Valor mensal: ${formatarMoeda(d.valor)}</p>
+</div>
+<div class="list-item-actions">
+<button class="btn btn-action" onclick="editarDespesa(${d.id})">
+<span class="btn-icon">${ICONS.editar}</span>
+<span>Editar</span>
+</button>
+<button class="btn btn-action btn-delete" onclick="excluirDespesa(${d.id})">
+<span class="btn-icon">${ICONS.excluir}</span>
+<span>Excluir</span>
+</button>
+</div>
+</div>
+`,
+            )
+            .join("");
+          const total = despesas.reduce((sum, d) => sum + d.valor, 0);
+          const configTx = db.transaction(["config"], "readonly");
+          const configStore = configTx.objectStore("config");
+          const configReq = configStore.get("horasTrabalho");
+          configReq.onsuccess = () => {
+            const config = configReq.result;
+            const horas = config ? config.valor : 0;
+            const despesaPorHora = horas > 0 ? total / horas : 0;
+            horasInfoDiv.innerHTML =
+              horas > 0
+                ? `
+<div class="info-box">
+<span class="info-box-icon">${ICONS.relogio}</span>
+<div><strong>Horas cadastradas:</strong> ${formatarNumero(horas)} horas/mês</div>
+</div>
+`
+                : `
+<div class="info-box warning">
+<span class="info-box-icon">${ICONS.alerta}</span>
+<div><strong>Atenção:</strong> Cadastre as horas totais de trabalho ao mês para calcular a despesa fixa por hora.</div>
+</div>
+`;
+            somatoriaDiv.innerHTML = `
+<div class="summary-box">
+<h3><span class="summary-icon">${ICONS.grafico}</span> Somatório das Despesas Fixas Mensais</h3>
+<div class="summary-value">${formatarMoeda(total)}</div>
+${
+  horas > 0
+    ? `
+<div class="summary-info">
+<span class="summary-icon">${ICONS.relogio}</span>
+<span>Despesa fixa por hora: <strong>${formatarMoeda(despesaPorHora)}</strong></span>
+</div>
+`
+    : ""
+}
+</div>
+`;
+          };
+        };
+      }
+      function filtrarDespesas() {
+        carregarDespesas();
+      }
+      function editarDespesa(id) {
+        const transaction = db.transaction(["despesasFixas"], "readonly");
+        const store = transaction.objectStore("despesasFixas");
+        const request = store.get(id);
+        request.onsuccess = () => {
+          const despesa = request.result;
+          const novoNome = prompt("Nome da despesa:", despesa.nome);
+          if (novoNome === null) return;
+          const novoValorStr = prompt(
+            "Valor mensal (R$):",
+            formatarNumero(despesa.valor),
+          );
+          if (novoValorStr === null) return;
+          const novoValor = parseNumeroBR(novoValorStr);
+          if (!novoNome.trim() || isNaN(novoValor)) {
+            showAlertCustom("Dados inválidos.");
+            return;
+          }
+          despesa.nome = novoNome.trim();
+          despesa.valor = novoValor;
+          const updateTx = db.transaction(["despesasFixas"], "readwrite");
+          const updateStore = updateTx.objectStore("despesasFixas");
+          const updateReq = updateStore.put(despesa);
+          updateReq.onsuccess = () => carregarDespesas();
+        };
+      }
+      function excluirDespesa(id) {
+        showConfirmCustom(
+          "Tem certeza que deseja excluir esta despesa?",
+          () => {
+            const transaction = db.transaction(["despesasFixas"], "readwrite");
+            const store = transaction.objectStore("despesasFixas");
+            const request = store.delete(id);
+            request.onsuccess = () => carregarDespesas();
+          },
+        );
+      }
+      function salvarIngrediente() {
+        const nome = document.getElementById("ingredienteNome").value.trim();
+        const unidade = document.getElementById("ingredienteUnidade").value;
+        const custo = lerInput("ingredienteCusto");
+        const quantidade = lerInput("ingredienteQuantidade");
+        if (!nome || isNaN(custo) || isNaN(quantidade)) {
+          showAlertCustom("Por favor, preencha todos os campos corretamente.");
+          return;
+        }
+        const ingrediente = {
+          nome: nome,
+          unidade: unidade,
+          custo: custo,
+          quantidade: quantidade,
+        };
+        const transaction = db.transaction(["ingredientes"], "readwrite");
+        const store = transaction.objectStore("ingredientes");
+        const request = store.add(ingrediente);
+        request.onsuccess = () => {
+          showAlertCustom("✅ Ingrediente cadastrado com sucesso!");
+          document.getElementById("ingredienteNome").value = "";
+          document.getElementById("ingredienteCusto").value = "";
+          document.getElementById("ingredienteQuantidade").value = "";
+          carregarIngredientes();
+        };
+        request.onerror = () =>
+          showAlertCustom("❌ Erro ao salvar ingrediente.");
+      }
+
+      /* ============================================================
+   EDITAR INGREDIENTE COM MODAL (nome + custo + quantidade)
+   ============================================================ */
+      function editarIngrediente(id) {
+        const transaction = db.transaction(["ingredientes"], "readonly");
+        const store = transaction.objectStore("ingredientes");
+        const request = store.get(id);
+        request.onsuccess = () => {
+          const ingrediente = request.result;
+          const corpoHTML = `
+<div class="form-group">
+<label>Nome do Ingrediente</label>
+<input type="text" id="editIngNome" value="${ingrediente.nome}" />
+</div>
+<div class="form-group">
+<label>Custo Unitário (R$)</label>
+<input type="text" id="editIngCusto" value="${formatarNumero(ingrediente.custo)}" class="input-numerico input-moeda" />
+</div>
+<div class="form-group">
+<label>Quantidade na Embalagem</label>
+<input type="text" id="editIngQtd" value="${formatarNumero(ingrediente.quantidade)}" class="input-numerico" />
+</div>
+`;
+          abrirModalCustom("Editar Ingrediente", corpoHTML, [
+            {
+              texto: "Cancelar",
+              classe: "btn-secondary",
+              onclick: fecharModalCustom,
+            },
+            {
+              texto: "Salvar",
+              classe: "btn",
+              onclick: () => salvarEdicaoIngrediente(id),
+            },
+          ]);
+        };
+      }
+
+      function salvarEdicaoIngrediente(id) {
+        const nome = document.getElementById("editIngNome").value.trim();
+        const custo = parseNumeroBR(
+          document.getElementById("editIngCusto").value,
+        );
+        const quantidade = parseNumeroBR(
+          document.getElementById("editIngQtd").value,
+        );
+
+        if (!nome || isNaN(custo) || isNaN(quantidade)) {
+          showAlertCustom("Por favor, preencha todos os campos corretamente.");
+          return;
+        }
+
+        const transaction = db.transaction(["ingredientes"], "readwrite");
+        const store = transaction.objectStore("ingredientes");
+        const request = store.get(id);
+        request.onsuccess = () => {
+          const ingrediente = request.result;
+          ingrediente.nome = nome;
+          ingrediente.custo = custo;
+          ingrediente.quantidade = quantidade;
+          const updateTx = db.transaction(["ingredientes"], "readwrite");
+          const updateStore = updateTx.objectStore("ingredientes");
+          const updateReq = updateStore.put(ingrediente);
+          updateReq.onsuccess = () => {
+            fecharModalCustom();
+            carregarIngredientes();
+            showAlertCustom("✅ Ingrediente atualizado com sucesso!");
+          };
+          updateReq.onerror = () =>
+            showAlertCustom("❌ Erro ao atualizar ingrediente.");
+        };
+      }
+
+      function carregarIngredientes() {
+        const transaction = db.transaction(["ingredientes"], "readonly");
+        const store = transaction.objectStore("ingredientes");
+        const request = store.getAll();
+        request.onsuccess = () => {
+          let ingredientes = request.result;
+          ingredientes.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+          const search = document
+            .getElementById("searchIngredientes")
+            .value.toLowerCase();
+          if (search) {
+            ingredientes = ingredientes.filter((i) =>
+              i.nome.toLowerCase().includes(search),
+            );
+          }
+          const lista = document.getElementById("listaIngredientes");
+          if (ingredientes.length === 0) {
+            lista.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.ingredientes}</div><p>${search ? "Nenhum ingrediente encontrado com esse nome" : "Nenhum ingrediente cadastrado ainda"}</p></div>`;
+            return;
+          }
+          lista.innerHTML = ingredientes
+            .map(
+              (ing) => `
+<div class="list-item">
+<div class="list-item-info">
+<strong>${ing.nome}</strong>
+<p>Custo: ${formatarMoeda(ing.custo)} · Quantidade na embalagem: ${formatarNumero(ing.quantidade)} ${ing.unidade}</p>
+</div>
+<div class="list-item-actions">
+<button class="btn btn-action" onclick="editarIngrediente(${ing.id})">
+<span class="btn-icon">${ICONS.editar}</span>
+<span>Editar</span>
+</button>
+<button class="btn btn-action btn-delete" onclick="excluirIngrediente(${ing.id})">
+<span class="btn-icon">${ICONS.excluir}</span>
+<span>Excluir</span>
+</button>
+</div>
+</div>
+`,
+            )
+            .join("");
+        };
+      }
+      function filtrarIngredientes() {
+        carregarIngredientes();
+      }
+      function excluirIngrediente(id) {
+        showConfirmCustom(
+          "Tem certeza que deseja excluir este ingrediente?",
+          () => {
+            const transaction = db.transaction(["ingredientes"], "readwrite");
+            const store = transaction.objectStore("ingredientes");
+            const request = store.delete(id);
+            request.onsuccess = () => carregarIngredientes();
+          },
+        );
+      }
+      function carregarReceitasSelect() {
+        const transaction = db.transaction(["receitas"], "readonly");
+        const store = transaction.objectStore("receitas");
+        const request = store.getAll();
+        request.onsuccess = () => {
+          let receitas = request.result;
+          receitas.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+          const select = document.getElementById("receitaSelect");
+          select.innerHTML =
+            '<option value="">Selecione uma receita...</option>';
+          receitas.forEach((receita) => {
+            select.innerHTML += `<option value="${receita.id}">${receita.nome}</option>`;
+          });
+        };
+      }
+      function carregarIngredientesReceita() {
+        const receitaId = document.getElementById("receitaSelect").value;
+        const areaPrecificacao = document.getElementById("areaPrecificacao");
+        if (!receitaId) {
+          areaPrecificacao.style.display = "none";
+          return;
+        }
+        areaPrecificacao.style.display = "block";
+        const transaction = db.transaction(["ingredientes"], "readonly");
+        const store = transaction.objectStore("ingredientes");
+        const request = store.getAll();
+        request.onsuccess = () => {
+          let ingredientes = request.result;
+          ingredientes.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+          const select = document.getElementById("ingredienteSelect");
+          select.innerHTML =
+            '<option value="">Selecione um ingrediente...</option>';
+          ingredientes.forEach((ing) => {
+            select.innerHTML += `<option value="${ing.id}">${ing.nome} (${ing.unidade})</option>`;
+          });
+        };
+        document.getElementById("ingredientesAdicionados").innerHTML = "";
+        document.getElementById("resultadoPrecificacao").innerHTML = "";
+        document.getElementById("despesaFixaRateadaInfo").innerHTML = "";
+        document.getElementById("unidadesPorHora").value = "";
+        ingredientesReceitaAtual = [];
+        ultimoCalculo = null;
+      }
+      let ingredientesReceitaAtual = [];
+      let ultimoCalculo = null;
+      function adicionarIngrediente() {
+        const ingredienteId = parseInt(
+          document.getElementById("ingredienteSelect").value,
+        );
+        const quantidade = lerInput("quantidadeUsada");
+        if (!ingredienteId || isNaN(quantidade)) {
+          showAlertCustom(
+            "Por favor, selecione um ingrediente e informe a quantidade.",
+          );
+          return;
+        }
+        const transaction = db.transaction(["ingredientes"], "readonly");
+        const store = transaction.objectStore("ingredientes");
+        const request = store.get(ingredienteId);
+        request.onsuccess = () => {
+          const ingrediente = request.result;
+          const custoUnitario = ingrediente.custo / ingrediente.quantidade;
+          const custoTotal = custoUnitario * quantidade;
+          ingredientesReceitaAtual.push({
+            id: ingrediente.id,
+            nome: ingrediente.nome,
+            unidade: ingrediente.unidade,
+            quantidade: quantidade,
+            custoUnitario: custoUnitario,
+            custoTotal: custoTotal,
+          });
+          atualizarListaIngredientes();
+          document.getElementById("quantidadeUsada").value = "";
+        };
+      }
+      function atualizarListaIngredientes() {
+        const div = document.getElementById("ingredientesAdicionados");
+        if (ingredientesReceitaAtual.length === 0) {
+          div.innerHTML = "";
+          return;
+        }
+        const totalIngredientes = ingredientesReceitaAtual.reduce(
+          (sum, ing) => sum + ing.custoTotal,
+          0,
+        );
+        div.innerHTML =
+          `<h4 style="color: var(--marrom-escuro); margin-bottom: 12px; display: flex; align-items: center; gap: 10px; font-size: 1.05rem; font-weight: 600;">${icon("ingredientes", 18)} Ingredientes Adicionados</h4>` +
+          ingredientesReceitaAtual
+            .map(
+              (ing, index) => `
+<div class="list-item">
+<div class="list-item-info">
+<strong>${ing.nome}</strong>
+<p>${formatarNumero(ing.quantidade)} ${ing.unidade} · ${formatarMoeda(ing.custoTotal)}</p>
+</div>
+<div class="list-item-actions">
+<button class="btn btn-action btn-delete" onclick="removerIngrediente(${index})">
+<span class="btn-icon">${ICONS.excluir}</span>
+<span>Remover</span>
+</button>
+</div>
+</div>
+`,
+            )
+            .join("") +
+          `<div class="ingredientes-total">
+<span class="total-label">TOTAL DE INGREDIENTES</span>
+<span class="total-value">${formatarMoeda(totalIngredientes)}</span>
+</div>`;
+      }
+      function removerIngrediente(index) {
+        ingredientesReceitaAtual.splice(index, 1);
+        atualizarListaIngredientes();
+        document.getElementById("resultadoPrecificacao").innerHTML = "";
+        ultimoCalculo = null;
+      }
+      function calcularDespesaFixaRateada() {
+        const unidadesPorHora = lerInput("unidadesPorHora");
+        const infoDiv = document.getElementById("despesaFixaRateadaInfo");
+        if (!unidadesPorHora || unidadesPorHora <= 0) {
+          infoDiv.innerHTML = "";
+          return;
+        }
+        const configTx = db.transaction(["config"], "readonly");
+        const configStore = configTx.objectStore("config");
+        const configReq = configStore.get("horasTrabalho");
+        configReq.onsuccess = () => {
+          const config = configReq.result;
+          const horas = config ? config.valor : 0;
+          if (horas <= 0) {
+            infoDiv.innerHTML = `
+<div class="info-box warning">
+<span class="info-box-icon">${ICONS.alerta}</span>
+<div><strong>Atenção:</strong> Cadastre as horas de trabalho na tela "Despesas Fixas" para calcular a despesa fixa rateada.</div>
+</div>
+`;
+            return;
+          }
+          const despesaTx = db.transaction(["despesasFixas"], "readonly");
+          const despesaStore = despesaTx.objectStore("despesasFixas");
+          const despesaReq = despesaStore.getAll();
+          despesaReq.onsuccess = () => {
+            const despesas = despesaReq.result;
+            const totalDespesas = despesas.reduce((sum, d) => sum + d.valor, 0);
+            const despesaPorHora = totalDespesas / horas;
+            const despesaRateada = despesaPorHora / unidadesPorHora;
+            infoDiv.innerHTML = `
+<div class="info-box">
+<span class="info-box-icon">${ICONS.info}</span>
+<div>
+<strong>Despesa fixa por hora:</strong> ${formatarMoeda(despesaPorHora)}<br>
+<strong>Despesa fixa rateada por unidade:</strong> ${formatarMoeda(despesaRateada)}
+</div>
+</div>
+`;
+          };
+        };
+      }
+      async function calcularPreco() {
+        const receitaId = parseInt(
+          document.getElementById("receitaSelect").value,
+        );
+        const unidadesPorHora = lerInput("unidadesPorHora");
+        const impostos = lerInput("impostos") || 0;
+        const comissoes = lerInput("comissoes") || 0;
+        const taxasRecebimento = lerInput("taxasRecebimento") || 0;
+        const custoEmbalagem = lerInput("custoEmbalagem") || 0;
+        const taxaEntrega = lerInput("taxaEntrega") || 0;
+        const outrasDespesas = lerInput("outrasDespesas") || 0;
+        const margemLucro = lerInput("margemLucro") || 0;
+        if (ingredientesReceitaAtual.length === 0) {
+          showAlertCustom("Adicione pelo menos um ingrediente.");
+          return;
+        }
+        if (!unidadesPorHora || unidadesPorHora <= 0) {
+          showAlertCustom("Informe a quantidade de unidades produzidas em 1h.");
+          return;
+        }
+        const configTx = db.transaction(["config"], "readonly");
+        const configStore = configTx.objectStore("config");
+        const configReq = configStore.get("horasTrabalho");
+        configReq.onsuccess = () => {
+          const config = configReq.result;
+          const horas = config ? config.valor : 0;
+          if (horas <= 0) {
+            showAlertCustom(
+              'Cadastre as horas de trabalho na tela "Despesas Fixas".',
+            );
+            return;
+          }
+          const despesaTx = db.transaction(["despesasFixas"], "readonly");
+          const despesaStore = despesaTx.objectStore("despesasFixas");
+          const despesaReq = despesaStore.getAll();
+          despesaReq.onsuccess = () => {
+            const despesas = despesaReq.result;
+            const totalDespesas = despesas.reduce((sum, d) => sum + d.valor, 0);
+            const despesaPorHora = totalDespesas / horas;
+            const despesaFixaProporcional = despesaPorHora / unidadesPorHora;
+            const somaPercentuais =
+              impostos +
+              comissoes +
+              taxasRecebimento +
+              outrasDespesas +
+              margemLucro;
+            if (somaPercentuais >= 100) {
+              showAlertCustom(
+                "A soma dos percentuais não pode ser igual ou superior a 100%.",
+              );
+              return;
+            }
+            const totalIngredientes = ingredientesReceitaAtual.reduce(
+              (sum, i) => sum + i.custoTotal,
+              0,
+            );
+            const numerador =
+              totalIngredientes +
+              despesaFixaProporcional +
+              taxaEntrega +
+              custoEmbalagem;
+            const denominador = 1 - somaPercentuais / 100;
+            const precoVenda = numerador / denominador;
+            const lucroLiquido = precoVenda * (margemLucro / 100);
+            const recTx = db.transaction(["receitas"], "readonly");
+            const recStore = recTx.objectStore("receitas");
+            const recReq = recStore.get(receitaId);
+            recReq.onsuccess = () => {
+              const receita = recReq.result;
+              const ehRecalculo =
+                ultimoCalculo && ultimoCalculo.receitaId === receitaId;
+              ultimoCalculo = {
+                receitaId: receitaId,
+                receitaNome: receita.nome,
+                ingredientes: [...ingredientesReceitaAtual],
+                totalIngredientes: totalIngredientes,
+                unidadesPorHora: unidadesPorHora,
+                despesaFixaPorHora: despesaPorHora,
+                despesaFixaProporcional: despesaFixaProporcional,
+                impostos: impostos,
+                comissoes: comissoes,
+                taxasRecebimento: taxasRecebimento,
+                custoEmbalagem: custoEmbalagem,
+                taxaEntrega: taxaEntrega,
+                outrasDespesas: outrasDespesas,
+                margemLucro: margemLucro,
+                somaPercentuais: somaPercentuais,
+                numerador: numerador,
+                denominador: denominador,
+                precoVenda: precoVenda,
+                lucroLiquido: lucroLiquido,
+                data: new Date(),
+                versao: ehRecalculo ? (ultimoCalculo.versao || 1) + 1 : 1,
+              };
+              const resultadoDiv = document.getElementById(
+                "resultadoPrecificacao",
+              );
+              resultadoDiv.innerHTML = `
+<div class="price-display">
+<h3>Preço Ideal de Venda${ehRecalculo ? " (Recalculado)" : ""}</h3>
+<div class="price">${formatarMoeda(precoVenda)}</div>
+<p style="margin-top: 10px; font-size: 0.9rem;">Lucro líquido: ${formatarMoeda(lucroLiquido)}</p>
+${ehRecalculo ? `<p style="margin-top: 5px; font-size: 0.85rem; opacity: 0.85;">Versão ${ultimoCalculo.versao} · ${new Date().toLocaleTimeString("pt-BR")}</p>` : ""}
+</div>
+<div class="calculation-details">
+<h4>${icon("calcular", 20)} Detalhamento do Cálculo</h4>
+<div class="calculation-row">
+<span><strong>Custos com ingredientes:</strong></span>
+<span><strong>${formatarMoeda(totalIngredientes)}</strong></span>
+</div>
+<div class="calculation-row">
+<span>Despesa fixa proporcional:</span>
+<span>${formatarMoeda(despesaFixaProporcional)}</span>
+</div>
+<div class="calculation-row">
+<span>Despesa com embalagem:</span>
+<span>${formatarMoeda(custoEmbalagem)}</span>
+</div>
+<div class="calculation-row">
+<span>Taxa de entrega:</span>
+<span>${formatarMoeda(taxaEntrega)}</span>
+</div>
+<div class="calculation-row">
+<span><strong>Numerador (soma dos custos diretos):</strong></span>
+<span><strong>${formatarMoeda(numerador)}</strong></span>
+</div>
+<div class="calculation-row">
+<span>Impostos (${formatarPercentual(impostos)}):</span>
+<span>${formatarPercentual(impostos)}</span>
+</div>
+<div class="calculation-row">
+<span>Comissões (${formatarPercentual(comissoes)}):</span>
+<span>${formatarPercentual(comissoes)}</span>
+</div>
+<div class="calculation-row">
+<span>Taxas de recebimento (${formatarPercentual(taxasRecebimento)}):</span>
+<span>${formatarPercentual(taxasRecebimento)}</span>
+</div>
+<div class="calculation-row">
+<span>Outras despesas variáveis (${formatarPercentual(outrasDespesas)}):</span>
+<span>${formatarPercentual(outrasDespesas)}</span>
+</div>
+<div class="calculation-row">
+<span>Margem de lucro (${formatarPercentual(margemLucro)}):</span>
+<span>${formatarPercentual(margemLucro)}</span>
+</div>
+<div class="calculation-row">
+<span>Soma dos percentuais:</span>
+<span>${formatarPercentual(somaPercentuais)}</span>
+</div>
+<div class="calculation-row">
+<span>Denominador (1 - soma%):</span>
+<span>${formatarNumero(denominador)}</span>
+</div>
+<div class="calculation-row">
+<span>PREÇO DE VENDA:</span>
+<span>${formatarMoeda(precoVenda)}</span>
+</div>
+</div>
+<div class="action-bar">
+<button class="btn" onclick="salvarPreco(${receitaId}, ${precoVenda}, ${lucroLiquido})">
+${icon("salvar", 22)} ${ehRecalculo ? "Atualizar Preço" : "Salvar no cadastro de receitas"}
+</button>
+<button class="btn btn-excel" onclick="exportarParaExcel()">
+${icon("excel", 22)} Exportar para Excel
+</button>
+<button class="btn btn-pdf" onclick="exportarParaPDF()">
+${icon("pdf", 22)} Exportar para PDF
+</button>
+</div>
+`;
+            };
+          };
+        };
+      }
+      function salvarPreco(receitaId, preco, lucro) {
+        const transaction = db.transaction(["receitas"], "readwrite");
+        const store = transaction.objectStore("receitas");
+        const request = store.get(receitaId);
+        request.onsuccess = () => {
+          const receita = request.result;
+          const precoAnterior = receita.preco;
+          receita.preco = preco;
+          receita.lucro = lucro;
+          const updateRequest = store.put(receita);
+          updateRequest.onsuccess = () => {
+            if (precoAnterior > 0) {
+              showAlertCustom(
+                `✅ Preço atualizado com sucesso!<br><br>Preço anterior: ${formatarMoeda(precoAnterior)}<br>Novo preço: ${formatarMoeda(preco)}<br>Lucro: ${formatarMoeda(lucro)}`,
+              );
+            } else {
+              showAlertCustom(
+                `✅ Preço salvo com sucesso!<br><br>Preço: ${formatarMoeda(preco)}<br>Lucro: ${formatarMoeda(lucro)}`,
+              );
+            }
+            if (ultimoCalculo) {
+              const precificacao = {
+                receitaId: receitaId,
+                receitaNome: receita.nome,
+                ingredientes: ultimoCalculo.ingredientes,
+                totalIngredientes: ultimoCalculo.totalIngredientes,
+                unidadesPorHora: ultimoCalculo.unidadesPorHora,
+                despesaFixaPorHora: ultimoCalculo.despesaFixaPorHora,
+                despesaFixaProporcional: ultimoCalculo.despesaFixaProporcional,
+                impostos: ultimoCalculo.impostos,
+                comissoes: ultimoCalculo.comissoes,
+                taxasRecebimento: ultimoCalculo.taxasRecebimento,
+                custoEmbalagem: ultimoCalculo.custoEmbalagem,
+                taxaEntrega: ultimoCalculo.taxaEntrega,
+                outrasDespesas: ultimoCalculo.outrasDespesas,
+                margemLucro: ultimoCalculo.margemLucro,
+                somaPercentuais: ultimoCalculo.somaPercentuais,
+                numerador: ultimoCalculo.numerador,
+                denominador: ultimoCalculo.denominador,
+                precoVenda: ultimoCalculo.precoVenda,
+                lucroLiquido: ultimoCalculo.lucroLiquido,
+                data: new Date(),
+                versao: ultimoCalculo.versao,
+              };
+              const precifTransaction = db.transaction(
+                ["precificacoes"],
+                "readwrite",
+              );
+              const precifStore =
+                precifTransaction.objectStore("precificacoes");
+              precifStore.add(precificacao);
+            }
+
+            // CORREÇÃO: Limpar a tela e as variáveis após salvar com sucesso
+            ingredientesReceitaAtual = [];
+            ultimoCalculo = null;
+            limparTelaPrecificacao();
+
+            carregarReceitas();
+          };
+        };
+      }
+      function exportarParaExcel() {
+        if (!ultimoCalculo) {
+          showAlertCustom(
+            "Nenhum cálculo realizado ainda. Calcule o preço primeiro.",
+          );
+          return;
+        }
+        if (typeof XLSX === "undefined") {
+          showAlertCustom(
+            "Biblioteca de exportação não carregada. Verifique sua conexão com a internet.",
+          );
+          return;
+        }
+        const calc = ultimoCalculo;
+        const wb = XLSX.utils.book_new();
+        const dados = [];
+        const dataFormatada =
+          calc.data.toLocaleDateString("pt-BR") +
+          " às " +
+          calc.data.toLocaleTimeString("pt-BR");
+        dados.push(["PRECIFICA+ · PRECIFICAÇÃO DE RECEITA"]);
+        dados.push([]);
+        dados.push(["DATA DA PRECIFICAÇÃO", dataFormatada]);
+        dados.push(["RECEITA", calc.receitaNome]);
+        dados.push([
+          "UNIDADES PRODUZIDAS POR HORA",
+          formatarNumero(calc.unidadesPorHora) + " un/h",
+        ]);
+        if (calc.versao > 1) {
+          dados.push([
+            "VERSÃO DO CÁLCULO",
+            "Versão " + calc.versao + " (recalculado)",
+          ]);
+        }
+        dados.push([]);
+        dados.push([
+          "═══════════════════════════════════════════════════════════════",
+        ]);
+        dados.push(["1. INGREDIENTES DA RECEITA"]);
+        dados.push([
+          "═══════════════════════════════════════════════════════════════",
+        ]);
+        dados.push([
+          "INGREDIENTE",
+          "QUANTIDADE",
+          "UNIDADE",
+          "CUSTO UNITÁRIO",
+          "CUSTO TOTAL",
+        ]);
+        calc.ingredientes.forEach((ing) => {
+          dados.push([
+            ing.nome,
+            formatarNumero(ing.quantidade),
+            ing.unidade,
+            formatarMoeda(ing.custoUnitario),
+            formatarMoeda(ing.custoTotal),
+          ]);
+        });
+        dados.push([]);
+        dados.push([
+          "",
+          "",
+          "",
+          "SUBTOTAL INGREDIENTES:",
+          formatarMoeda(calc.totalIngredientes),
+        ]);
+        dados.push([]);
+        dados.push([
+          "═══════════════════════════════════════════════════════════════",
+        ]);
+        dados.push(["2. PARÂMETROS DE PRODUÇÃO"]);
+        dados.push([
+          "═══════════════════════════════════════════════════════════════",
+        ]);
+        dados.push(["DESCRIÇÃO", "VALOR"]);
+        dados.push([
+          "Unidades produzidas por hora",
+          formatarNumero(calc.unidadesPorHora) + " un/h",
+        ]);
+        dados.push([
+          "Despesa fixa total por hora",
+          formatarMoeda(calc.despesaFixaPorHora) + " /h",
+        ]);
+        dados.push([
+          "Despesa fixa rateada por unidade",
+          formatarMoeda(calc.despesaFixaProporcional) + " /un",
+        ]);
+        dados.push([]);
+        dados.push([
+          "═══════════════════════════════════════════════════════════════",
+        ]);
+        dados.push(["3. CUSTOS DIRETOS POR UNIDADE"]);
+        dados.push([
+          "═══════════════════════════════════════════════════════════════",
+        ]);
+        dados.push(["DESCRIÇÃO", "VALOR (R$)"]);
+        dados.push([
+          "Ingredientes (total proporcional)",
+          formatarMoeda(calc.totalIngredientes),
+        ]);
+        dados.push([
+          "Despesa fixa rateada",
+          formatarMoeda(calc.despesaFixaProporcional),
+        ]);
+        dados.push([
+          "Despesa com embalagem",
+          formatarMoeda(calc.custoEmbalagem),
+        ]);
+        dados.push(["Taxa de entrega", formatarMoeda(calc.taxaEntrega)]);
+        dados.push([]);
+        dados.push([
+          "TOTAL DE CUSTOS DIRETOS (NUMERADOR)",
+          formatarMoeda(calc.numerador),
+        ]);
+        dados.push([]);
+        dados.push([
+          "═══════════════════════════════════════════════════════════════",
+        ]);
+        dados.push(["4. PERCENTUAIS APLICADOS SOBRE O PREÇO DE VENDA"]);
+        dados.push([
+          "═══════════════════════════════════════════════════════════════",
+        ]);
+        dados.push(["DESCRIÇÃO", "PERCENTUAL"]);
+        dados.push([
+          "Impostos pagos na venda",
+          formatarPercentual(calc.impostos),
+        ]);
+        dados.push([
+          "Comissões de aplicativos",
+          formatarPercentual(calc.comissoes),
+        ]);
+        dados.push([
+          "Taxas de recebimento",
+          formatarPercentual(calc.taxasRecebimento),
+        ]);
+        dados.push([
+          "Outras despesas variáveis",
+          formatarPercentual(calc.outrasDespesas),
+        ]);
+        dados.push([
+          "Margem de lucro desejada",
+          formatarPercentual(calc.margemLucro),
+        ]);
+        dados.push([]);
+        dados.push([
+          "SOMA DOS PERCENTUAIS",
+          formatarPercentual(calc.somaPercentuais),
+        ]);
+        dados.push([]);
+        dados.push([
+          "═══════════════════════════════════════════════════════════════",
+        ]);
+        dados.push(["5. FÓRMULA APLICADA"]);
+        dados.push([
+          "═══════════════════════════════════════════════════════════════",
+        ]);
+        dados.push([
+          "Preço = (Ingredientes + Despesa fixa + Taxa entrega + Embalagem) / (1 - soma dos percentuais)",
+        ]);
+        dados.push([
+          "Preço = " +
+            formatarMoeda(calc.numerador) +
+            " / " +
+            formatarNumero(calc.denominador),
+        ]);
+        dados.push([]);
+        dados.push([
+          "═══════════════════════════════════════════════════════════════",
+        ]);
+        dados.push(["6. PREÇO IDEAL DE VENDA"]);
+        dados.push([
+          "═══════════════════════════════════════════════════════════════",
+        ]);
+        dados.push(["PREÇO DE VENDA SUGERIDO", formatarMoeda(calc.precoVenda)]);
+        dados.push(["LUCRO LÍQUIDO", formatarMoeda(calc.lucroLiquido)]);
+        dados.push([]);
+        dados.push([
+          "═══════════════════════════════════════════════════════════════",
+        ]);
+        dados.push(["7. DEMONSTRATIVO DO PREÇO DE VENDA"]);
+        dados.push([
+          "═══════════════════════════════════════════════════════════════",
+        ]);
+        dados.push(["DESCRIÇÃO", "VALOR (R$)", "PERCENTUAL"]);
+        dados.push([
+          "(=) Preço de venda",
+          formatarMoeda(calc.precoVenda),
+          "100,00%",
+        ]);
+        dados.push([
+          "(-) Custos com ingredientes",
+          formatarMoeda(calc.totalIngredientes),
+          "-",
+        ]);
+        dados.push([
+          "(-) Despesa fixa rateada",
+          formatarMoeda(calc.despesaFixaProporcional),
+          "-",
+        ]);
+        dados.push([
+          "(-) Despesa com embalagem",
+          formatarMoeda(calc.custoEmbalagem),
+          "-",
+        ]);
+        dados.push([
+          "(-) Taxa de entrega",
+          formatarMoeda(calc.taxaEntrega),
+          "-",
+        ]);
+        dados.push([
+          "(-) Impostos",
+          formatarMoeda((calc.precoVenda * calc.impostos) / 100),
+          formatarPercentual(calc.impostos),
+        ]);
+        dados.push([
+          "(-) Comissões de aplicativos",
+          formatarMoeda((calc.precoVenda * calc.comissoes) / 100),
+          formatarPercentual(calc.comissoes),
+        ]);
+        dados.push([
+          "(-) Taxas de recebimento",
+          formatarMoeda((calc.precoVenda * calc.taxasRecebimento) / 100),
+          formatarPercentual(calc.taxasRecebimento),
+        ]);
+        dados.push([
+          "(-) Outras despesas variáveis",
+          formatarMoeda((calc.precoVenda * calc.outrasDespesas) / 100),
+          formatarPercentual(calc.outrasDespesas),
+        ]);
+        dados.push([]);
+        const lucroLiquido = (calc.precoVenda * calc.margemLucro) / 100;
+        dados.push([
+          "(=) LUCRO LÍQUIDO POR UNIDADE",
+          formatarMoeda(lucroLiquido),
+          formatarPercentual(calc.margemLucro),
+        ]);
+        dados.push([]);
+        dados.push([
+          "═══════════════════════════════════════════════════════════════",
+        ]);
+        dados.push([
+          "Relatório gerado pelo sistema Precifica+ em " + dataFormatada,
+        ]);
+        const ws = XLSX.utils.aoa_to_sheet(dados);
+        ws["!cols"] = [
+          { wch: 48 },
+          { wch: 22 },
+          { wch: 14 },
+          { wch: 22 },
+          { wch: 22 },
+        ];
+        ws["!merges"] = [
+          { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } },
+          { s: { r: 7, c: 0 }, e: { r: 7, c: 4 } },
+          { s: { r: 8, c: 0 }, e: { r: 8, c: 4 } },
+          { s: { r: 9, c: 0 }, e: { r: 9, c: 4 } },
+          { s: { r: 16, c: 0 }, e: { r: 16, c: 4 } },
+          { s: { r: 17, c: 0 }, e: { r: 17, c: 4 } },
+          { s: { r: 18, c: 0 }, e: { r: 18, c: 4 } },
+          { s: { r: 23, c: 0 }, e: { r: 23, c: 4 } },
+          { s: { r: 24, c: 0 }, e: { r: 24, c: 4 } },
+          { s: { r: 25, c: 0 }, e: { r: 25, c: 4 } },
+          { s: { r: 32, c: 0 }, e: { r: 32, c: 4 } },
+          { s: { r: 33, c: 0 }, e: { r: 33, c: 4 } },
+          { s: { r: 34, c: 0 }, e: { r: 34, c: 4 } },
+          { s: { r: 42, c: 0 }, e: { r: 42, c: 4 } },
+          { s: { r: 43, c: 0 }, e: { r: 43, c: 4 } },
+          { s: { r: 44, c: 0 }, e: { r: 44, c: 4 } },
+          { s: { r: 46, c: 0 }, e: { r: 46, c: 4 } },
+          { s: { r: 49, c: 0 }, e: { r: 49, c: 4 } },
+          { s: { r: 50, c: 0 }, e: { r: 50, c: 4 } },
+          { s: { r: 51, c: 0 }, e: { r: 51, c: 4 } },
+          { s: { r: 54, c: 0 }, e: { r: 54, c: 4 } },
+          { s: { r: 55, c: 0 }, e: { r: 55, c: 4 } },
+          { s: { r: 56, c: 0 }, e: { r: 56, c: 4 } },
+          { s: { r: 68, c: 0 }, e: { r: 68, c: 4 } },
+          { s: { r: 69, c: 0 }, e: { r: 69, c: 4 } },
+        ];
+        XLSX.utils.book_append_sheet(wb, ws, "Precificação");
+        const nomeArquivo = `Precificacao_${calc.receitaNome.replace(/[^a-zA-Z0-9]/g, "_")}_${new Date().toISOString().split("T")[0]}.xlsx`;
+        XLSX.writeFile(wb, nomeArquivo);
+      }
+      function exportarParaPDF() {
+        if (!ultimoCalculo) {
+          showAlertCustom(
+            "Nenhum cálculo realizado ainda. Calcule o preço primeiro.",
+          );
+          return;
+        }
+        if (typeof window.jspdf === "undefined") {
+          showAlertCustom(
+            "Biblioteca de exportação PDF não carregada. Verifique sua conexão com a internet.",
+          );
+          return;
+        }
+        const { jsPDF } = window.jspdf;
+        const calc = ultimoCalculo;
+        const doc = new jsPDF("p", "mm", "a4");
+        const pageWidth = 210;
+        const pageHeight = 297;
+        const margin = 15;
+        const contentWidth = pageWidth - margin * 2;
+        let y = 0;
+        const corVerdeProfundo = [58, 92, 54];
+        const corVerdeSage = [127, 166, 122];
+        const corVerdeClaro = [184, 212, 176];
+        const corMarromEscuro = [46, 31, 20];
+        const corMarrom = [107, 68, 35];
+        const corBege = [251, 248, 242];
+        const corBegeMedio = [235, 224, 203];
+        const corBranco = [255, 255, 255];
+        const corCinzaSuave = [247, 243, 236];
+        const corCinzaBorda = [232, 223, 208];
+        const dataFormatada =
+          calc.data.toLocaleDateString("pt-BR") +
+          " às " +
+          calc.data.toLocaleTimeString("pt-BR");
+        function checkPageBreak(needed) {
+          if (y + needed > pageHeight - 20) {
+            addFooter();
+            doc.addPage();
+            y = margin;
+            return true;
+          }
+          return false;
+        }
+        function addFooter() {
+          doc.setDrawColor(...corCinzaBorda);
+          doc.setLineWidth(0.3);
+          doc.line(
+            margin,
+            pageHeight - 15,
+            pageWidth - margin,
+            pageHeight - 15,
+          );
+          doc.setFontSize(7);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(...corMarrom);
+          doc.text(
+            "Precifica+ · Sistema de Precificação Inteligente",
+            margin,
+            pageHeight - 10,
+          );
+          doc.text(
+            "Página " + doc.internal.getNumberOfPages(),
+            pageWidth - margin,
+            pageHeight - 10,
+            { align: "right" },
+          );
+        }
+        doc.setFillColor(...corVerdeProfundo);
+        doc.rect(0, 0, pageWidth, 35, "F");
+        doc.setTextColor(...corBranco);
+        doc.setFontSize(26);
+        doc.setFont("helvetica", "bold");
+        doc.text("Ficha técnica", margin + 5, 22);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text("Relatório de Precificação de Receita", margin + 5, 29);
+        doc.setFontSize(8);
+        doc.text(dataFormatada, pageWidth - margin, 29, { align: "right" });
+        y = 45;
+        doc.setFillColor(...corBege);
+        doc.setDrawColor(...corBegeMedio);
+        doc.setLineWidth(0.4);
+        doc.roundedRect(margin, y, contentWidth, 26, 2, 2, "FD");
+        doc.setTextColor(...corMarrom);
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "bold");
+        doc.text("DATA DA PRECIFICAÇÃO", margin + 5, y + 7);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...corMarromEscuro);
+        doc.setFontSize(9);
+        doc.text(dataFormatada, margin + 5, y + 13);
+        doc.setDrawColor(...corBegeMedio);
+        doc.line(margin + 75, y + 4, margin + 75, y + 22);
+        doc.setTextColor(...corMarrom);
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "bold");
+        doc.text("RECEITA", margin + 80, y + 7);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...corMarromEscuro);
+        doc.setFontSize(10);
+        doc.text(calc.receitaNome, margin + 80, y + 14);
+        doc.setDrawColor(...corBegeMedio);
+        doc.line(margin + 135, y + 4, margin + 135, y + 22);
+        doc.setTextColor(...corMarrom);
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "bold");
+        doc.text("UNIDADES/HORA", margin + 140, y + 7);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...corMarromEscuro);
+        doc.setFontSize(10);
+        doc.text(
+          formatarNumero(calc.unidadesPorHora) + " un/h",
+          margin + 140,
+          y + 14,
+        );
+        doc.setDrawColor(...corBegeMedio);
+        doc.setLineWidth(0.6);
+        doc.line(margin + 5, y + 20, pageWidth - margin - 5, y + 20);
+        y += 34;
+        function sectionTitle(numero, titulo) {
+          checkPageBreak(18);
+          doc.setFillColor(...corVerdeSage);
+          doc.rect(margin, y, contentWidth, 8, "F");
+          doc.setTextColor(...corBranco);
+          doc.setFontSize(10);
+          doc.setFont("helvetica", "bold");
+          doc.text(`${numero}. ${titulo.toUpperCase()}`, margin + 3, y + 5.5);
+          y += 12;
+        }
+        function drawTable(headers, rows, colWidths, options = {}) {
+          const { alignRight = [], highlightLast = false } = options;
+          checkPageBreak(10);
+          doc.setFillColor(...corVerdeProfundo);
+          doc.rect(margin, y, contentWidth, 7, "F");
+          doc.setTextColor(...corBranco);
+          doc.setFontSize(8);
+          doc.setFont("helvetica", "bold");
+          let x = margin;
+          headers.forEach((h, i) => {
+            const isRight = alignRight.includes(i);
+            if (isRight) {
+              doc.text(h, x + colWidths[i] - 2, y + 5, { align: "right" });
+            } else {
+              doc.text(h, x + 2, y + 5);
+            }
+            x += colWidths[i];
+          });
+          y += 7;
+          doc.setFont("helvetica", "normal");
+          rows.forEach((row, idx) => {
+            checkPageBreak(7);
+            const isLast = highlightLast && idx === rows.length - 1;
+            if (isLast) {
+              doc.setFillColor(...corVerdeClaro);
+              doc.rect(margin, y, contentWidth, 7, "F");
+              doc.setDrawColor(...corVerdeSage);
+              doc.setLineWidth(0.5);
+              doc.line(margin, y, margin + contentWidth, y);
+              doc.setFont("helvetica", "bold");
+              doc.setTextColor(...corVerdeProfundo);
+            } else if (idx % 2 === 0) {
+              doc.setFillColor(...corCinzaSuave);
+              doc.rect(margin, y, contentWidth, 6, "F");
+              doc.setTextColor(...corMarromEscuro);
+            } else {
+              doc.setFillColor(...corBranco);
+              doc.rect(margin, y, contentWidth, 6, "F");
+              doc.setTextColor(...corMarromEscuro);
+            }
+            doc.setFontSize(8.5);
+            let x = margin;
+            row.forEach((cell, i) => {
+              const isRight = alignRight.includes(i);
+              if (isRight) {
+                doc.text(String(cell), x + colWidths[i] - 2, y + 4.3, {
+                  align: "right",
+                });
+              } else {
+                doc.text(String(cell), x + 2, y + 4.3);
+              }
+              x += colWidths[i];
+            });
+            y += isLast ? 7 : 6;
+          });
+          y += 4;
+        }
+        function keyValueRow(label, value) {
+          checkPageBreak(7);
+          doc.setFillColor(...corBranco);
+          doc.setTextColor(...corMarromEscuro);
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "normal");
+          doc.text(label, margin + 3, y + 4.5);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(...corVerdeProfundo);
+          doc.text(value, pageWidth - margin - 3, y + 4.5, { align: "right" });
+          doc.setDrawColor(...corCinzaBorda);
+          doc.setLineWidth(0.2);
+          doc.line(margin + 3, y + 6, pageWidth - margin - 3, y + 6);
+          y += 7;
+        }
+        sectionTitle("1", "Ingredientes da Receita");
+        const ingHeaders = [
+          "Ingrediente",
+          "Qtd.",
+          "Un.",
+          "Custo Unit.",
+          "Custo Total",
+        ];
+        const ingColWidths = [70, 25, 20, 35, 30];
+        const ingRows = calc.ingredientes.map((ing) => [
+          ing.nome,
+          formatarNumero(ing.quantidade),
+          ing.unidade,
+          formatarMoeda(ing.custoUnitario),
+          formatarMoeda(ing.custoTotal),
+        ]);
+        drawTable(ingHeaders, ingRows, ingColWidths, { alignRight: [1, 3, 4] });
+        checkPageBreak(10);
+        doc.setFillColor(...corVerdeClaro);
+        doc.rect(margin, y, contentWidth, 8, "F");
+        doc.setDrawColor(...corVerdeSage);
+        doc.setLineWidth(0.5);
+        doc.line(margin, y, margin + contentWidth, y);
+        doc.setTextColor(...corVerdeProfundo);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.text("SUBTOTAL INGREDIENTES", margin + 3, y + 5.5);
+        doc.text(
+          formatarMoeda(calc.totalIngredientes),
+          pageWidth - margin - 3,
+          y + 5.5,
+          { align: "right" },
+        );
+        y += 12;
+        sectionTitle("2", "Parâmetros de Produção");
+        keyValueRow(
+          "Unidades produzidas por hora",
+          formatarNumero(calc.unidadesPorHora) + " un/h",
+        );
+        keyValueRow(
+          "Despesa fixa total por hora",
+          formatarMoeda(calc.despesaFixaPorHora) + " /h",
+        );
+        keyValueRow(
+          "Despesa fixa rateada por unidade",
+          formatarMoeda(calc.despesaFixaProporcional) + " /un",
+        );
+        y += 4;
+        sectionTitle("3", "Custos Diretos por Unidade");
+        const custosHeaders = ["Descrição", "Valor (R$)"];
+        const custosColWidths = [140, 40];
+        const custosRows = [
+          [
+            "Ingredientes (total proporcional)",
+            formatarMoeda(calc.totalIngredientes),
+          ],
+          ["Despesa fixa rateada", formatarMoeda(calc.despesaFixaProporcional)],
+          ["Despesa com embalagem", formatarMoeda(calc.custoEmbalagem)],
+          ["Taxa de entrega", formatarMoeda(calc.taxaEntrega)],
+          [
+            "TOTAL DE CUSTOS DIRETOS (NUMERADOR)",
+            formatarMoeda(calc.numerador),
+          ],
+        ];
+        drawTable(custosHeaders, custosRows, custosColWidths, {
+          alignRight: [1],
+          highlightLast: true,
+        });
+        sectionTitle("4", "Percentuais Aplicados sobre o Preço de Venda");
+        const percHeaders = ["Descrição", "Percentual"];
+        const percColWidths = [140, 40];
+        const percRows = [
+          ["Impostos pagos na venda", formatarPercentual(calc.impostos)],
+          ["Comissões de aplicativos", formatarPercentual(calc.comissoes)],
+          ["Taxas de recebimento", formatarPercentual(calc.taxasRecebimento)],
+          [
+            "Outras despesas variáveis",
+            formatarPercentual(calc.outrasDespesas),
+          ],
+          ["Margem de lucro desejada", formatarPercentual(calc.margemLucro)],
+          ["SOMA DOS PERCENTUAIS", formatarPercentual(calc.somaPercentuais)],
+        ];
+        drawTable(percHeaders, percRows, percColWidths, {
+          alignRight: [1],
+          highlightLast: true,
+        });
+        sectionTitle("5", "Fórmula Aplicada");
+        checkPageBreak(18);
+        doc.setFillColor(...corBege);
+        doc.setDrawColor(...corBegeMedio);
+        doc.setLineWidth(0.4);
+        doc.roundedRect(margin, y, contentWidth, 16, 2, 2, "FD");
+        doc.setTextColor(...corMarromEscuro);
+        doc.setFontSize(8.5);
+        doc.setFont("helvetica", "italic");
+        doc.text(
+          "Preço = (Ingredientes + Despesa fixa + Taxa entrega + Embalagem) / (1 - soma dos percentuais)",
+          margin + 5,
+          y + 6,
+        );
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...corVerdeProfundo);
+        doc.setFontSize(9.5);
+        doc.text(
+          "Preço = " +
+            formatarMoeda(calc.numerador) +
+            " / " +
+            formatarNumero(calc.denominador),
+          margin + 5,
+          y + 12,
+        );
+        y += 22;
+        checkPageBreak(30);
+        doc.setFillColor(...corVerdeProfundo);
+        doc.rect(margin, y, contentWidth, 24, "F");
+        doc.setTextColor(...corVerdeClaro);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.text("6. PREÇO IDEAL DE VENDA", margin + 5, y + 8);
+        doc.setTextColor(...corBranco);
+        doc.setFontSize(20);
+        doc.text(formatarMoeda(calc.precoVenda), margin + 5, y + 19);
+        y += 30;
+        sectionTitle("7", "Demonstrativo do Preço de Venda");
+        const demHeaders = ["Descrição", "Valor (R$)", "%"];
+        const demColWidths = [110, 40, 30];
+        const lucroLiquido = (calc.precoVenda * calc.margemLucro) / 100;
+        const demRows = [
+          ["(=) Preço de venda", formatarMoeda(calc.precoVenda), "100,00%"],
+          [
+            "(-) Custos com ingredientes",
+            formatarMoeda(calc.totalIngredientes),
+            "-",
+          ],
+          [
+            "(-) Despesa fixa rateada",
+            formatarMoeda(calc.despesaFixaProporcional),
+            "-",
+          ],
+          [
+            "(-) Despesa com embalagem",
+            formatarMoeda(calc.custoEmbalagem),
+            "-",
+          ],
+          ["(-) Taxa de entrega", formatarMoeda(calc.taxaEntrega), "-"],
+          [
+            "(-) Impostos",
+            formatarMoeda((calc.precoVenda * calc.impostos) / 100),
+            formatarPercentual(calc.impostos),
+          ],
+          [
+            "(-) Comissões de aplicativos",
+            formatarMoeda((calc.precoVenda * calc.comissoes) / 100),
+            formatarPercentual(calc.comissoes),
+          ],
+          [
+            "(-) Taxas de recebimento",
+            formatarMoeda((calc.precoVenda * calc.taxasRecebimento) / 100),
+            formatarPercentual(calc.taxasRecebimento),
+          ],
+          [
+            "(-) Outras despesas variáveis",
+            formatarMoeda((calc.precoVenda * calc.outrasDespesas) / 100),
+            formatarPercentual(calc.outrasDespesas),
+          ],
+          [
+            "(=) LUCRO LÍQUIDO POR UNIDADE",
+            formatarMoeda(lucroLiquido),
+            formatarPercentual(calc.margemLucro),
+          ],
+        ];
+        drawTable(demHeaders, demRows, demColWidths, {
+          alignRight: [1, 2],
+          highlightLast: true,
+        });
+        y += 4;
+        checkPageBreak(15);
+        doc.setDrawColor(...corCinzaBorda);
+        doc.setLineWidth(0.5);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 5;
+        doc.setTextColor(...corMarrom);
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "italic");
+        doc.text(
+          "Relatório gerado pelo sistema Precifica+ em " + dataFormatada,
+          pageWidth / 2,
+          y,
+          { align: "center" },
+        );
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+          doc.setPage(i);
+          doc.setDrawColor(...corCinzaBorda);
+          doc.setLineWidth(0.3);
+          doc.line(
+            margin,
+            pageHeight - 15,
+            pageWidth - margin,
+            pageHeight - 15,
+          );
+          doc.setFontSize(7);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(...corMarrom);
+          doc.text(
+            "Precifica+ · Sistema de Precificação Inteligente",
+            margin,
+            pageHeight - 10,
+          );
+          doc.text(
+            `Página ${i} de ${totalPages}`,
+            pageWidth - margin,
+            pageHeight - 10,
+            { align: "right" },
+          );
+        }
+        const nomeArquivo = `Precificacao_${calc.receitaNome.replace(/[^a-zA-Z0-9]/g, "_")}_${new Date().toISOString().split("T")[0]}.pdf`;
+        doc.save(nomeArquivo);
+      }
+      window.onload = async () => {
+        await initDB();
+        inicializarIcones();
+        inicializarInputsNumericos();
+        carregarReceitas();
+      };
+    </script>
+  </body>
+</html>
